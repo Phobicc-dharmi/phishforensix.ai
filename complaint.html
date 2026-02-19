@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PhishForensix — File Complaint</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:      #020c14;
+      --panel:   #061524;
+      --card:    #071b2e;
+      --border:  #0d3050;
+      --border2: #0a2540;
+      --accent:  #00d4ff;
+      --accent2: #ff3e6c;
+      --green:   #00ff88;
+      --orange:  #ff9f43;
+      --purple:  #a855f7;
+      --text:    #c8e6f5;
+      --muted:   #3a6a88;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.022) 1px, transparent 1px);
+      background-size: 44px 44px;
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar-custom {
+      position: sticky; top: 0; z-index: 100;
+      padding: 12px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(2,12,20,0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border2);
+    }
+    .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .nav-brand svg { width:28px; height:28px; }
+    .nav-brand-text { font-family:'Orbitron',monospace; font-size:0.9rem; font-weight:900; color:#fff; letter-spacing:1px; }
+    .nav-brand-text span { color:var(--accent2); }
+    .nav-links { display:flex; gap:24px; list-style:none; }
+    .nav-links a { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--muted); text-decoration:none; letter-spacing:2px; text-transform:uppercase; transition:color 0.2s; }
+    .nav-links a:hover { color:var(--accent); }
+    .nav-links a.active { color:var(--accent2); }
+    .nav-user { display:flex; align-items:center; gap:8px; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--muted); letter-spacing:1px; }
+    .nav-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--purple)); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',monospace; font-size:0.6rem; font-weight:700; color:var(--bg); }
+
+    /* ── PAGE WRAP ── */
+    .page-wrap {
+      position: relative; z-index: 1;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      text-align: center; margin-bottom: 36px;
+      animation: fadeInUp 0.5s ease both;
+    }
+    .page-eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--accent2);
+      letter-spacing: 4px; text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .shield-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent2); box-shadow: 0 0 8px var(--accent2);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .page-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.8rem; font-weight: 900;
+      color: #fff; letter-spacing: 2px; margin-bottom: 8px;
+    }
+    .page-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--muted); letter-spacing: 1px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── STEPPER ── */
+    .stepper {
+      display: flex; align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 36px;
+      animation: fadeInUp 0.5s ease 0.1s both;
+    }
+
+    .step-item {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+      position: relative; z-index: 1;
+    }
+
+    .step-circle {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      border: 2px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      transition: all 0.4s;
+      position: relative; z-index: 1;
+    }
+
+    .step-item.active .step-circle {
+      border-color: var(--accent2);
+      background: rgba(255,62,108,0.1);
+      color: var(--accent2);
+      box-shadow: 0 0 16px rgba(255,62,108,0.3);
+    }
+
+    .step-item.done .step-circle {
+      border-color: var(--green);
+      background: rgba(0,255,136,0.1);
+      color: var(--green);
+    }
+
+    .step-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      transition: color 0.4s;
+      white-space: nowrap;
+    }
+
+    .step-item.active .step-name { color: var(--accent2); }
+    .step-item.done  .step-name  { color: var(--green); }
+
+    .step-connector {
+      width: 80px; height: 2px;
+      background: var(--border2);
+      margin-bottom: 24px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .step-connector .fill {
+      position: absolute; left:0; top:0; height:100%;
+      width: 0%;
+      background: var(--green);
+      transition: width 0.5s ease;
+    }
+
+    /* ── FORM CARD ── */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease 0.15s both;
+      position: relative;
+    }
+
+    .form-card::before {
+      content: '';
+      position: absolute; top:0; left:0; right:0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent2), var(--orange), var(--accent));
+    }
+
+    /* corner decoration */
+    .form-card::after {
+      content: '';
+      position: absolute; bottom:-1px; right:-1px;
+      width: 14px; height: 14px;
+      border-right: 2px solid var(--accent2);
+      border-bottom: 2px solid var(--accent2);
+    }
+
+    .form-card-header {
+      padding: 20px 28px 16px;
+      border-bottom: 1px solid var(--border2);
+      display: flex; align-items: center; gap: 14px;
+    }
+
+    .step-badge {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace; font-size: 0.7rem; font-weight: 700;
+      color: var(--bg); flex-shrink: 0;
+      background: var(--accent2);
+    }
+
+    .step-header-info h3 {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.8rem; font-weight: 700;
+      color: var(--text); letter-spacing: 2px;
+    }
+
+    .step-header-info p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 1px; margin-top: 2px;
+    }
+
+    /* Form body */
+    .form-body { padding: 28px; }
+
+    /* Field groups */
+    .field-group { margin-bottom: 20px; }
+
+    .field-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 7px;
+    }
+
+    .field-label .req { color: var(--accent2); }
+
+    .field-input, .field-select, .field-textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 11px 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem; color: var(--text);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .field-input::placeholder, .field-textarea::placeholder { color: #1e4060; }
+
+    .field-input:focus, .field-select:focus, .field-textarea:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 2px rgba(255,62,108,0.1), 0 0 16px rgba(255,62,108,0.08);
+    }
+
+    .field-input.valid { border-color: rgba(0,255,136,0.4); }
+    .field-input.invalid { border-color: rgba(255,62,108,0.6); }
+
+    .field-textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+
+    .field-select { cursor: pointer; }
+    .field-select option { background: #071b2e; }
+
+    .field-hint {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      letter-spacing: 1px; margin-top: 5px;
+    }
+
+    .field-error {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--accent2);
+      letter-spacing: 1px; margin-top: 5px;
+      display: none;
+    }
+
+    /* Grid layouts */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* Fraud type selector */
+    .fraud-type-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .fraud-type-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      padding: 14px 12px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-align: center;
+    }
+
+    .fraud-type-card:hover {
+      border-color: var(--accent2);
+      background: rgba(255,62,108,0.05);
+    }
+
+    .fraud-type-card.selected {
+      border-color: var(--accent2);
+      background: rgba(255,62,108,0.1);
+      box-shadow: 0 0 12px rgba(255,62,108,0.15);
+    }
+
+    .ft-icon { font-size: 1.6rem; margin-bottom: 6px; }
+    .ft-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .fraud-type-card.selected .ft-name { color: var(--accent2); }
+    .fraud-type-card:hover .ft-name    { color: var(--text); }
+
+    /* Amount input with currency */
+    .amount-wrap { position: relative; }
+    .amount-prefix {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      color: var(--muted); pointer-events: none; z-index: 1;
+    }
+    .amount-wrap .field-input { padding-left: 42px; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 2px; padding: 32px 24px;
+      text-align: center; cursor: pointer;
+      transition: all 0.3s; position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent2);
+      background: rgba(255,62,108,0.04);
+    }
+    .upload-zone input[type=file] {
+      position: absolute; inset:0;
+      opacity:0; cursor:pointer; width:100%; height:100%;
+    }
+    .upload-icon-big { font-size: 2.8rem; margin-bottom: 10px; }
+    .upload-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      color: var(--text); letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .upload-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.63rem; color: var(--muted); letter-spacing: 1px;
+    }
+    .upload-sub span { color: var(--accent2); }
+
+    .file-list {
+      display: flex; flex-direction: column; gap: 8px;
+      margin-top: 14px; text-align: left;
+    }
+
+    .file-item {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,62,108,0.06);
+      border: 1px solid rgba(255,62,108,0.2);
+      border-radius: 2px; padding: 10px 14px;
+    }
+
+    .file-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    .file-info { flex:1; }
+    .file-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; color: var(--text); letter-spacing: 0.5px;
+    }
+    .file-size {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem; color: var(--muted); margin-top: 2px;
+    }
+
+    .file-remove {
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 1rem; transition: color 0.2s; padding: 2px 6px;
+    }
+    .file-remove:hover { color: var(--accent2); }
+
+    /* Evidence types checkboxes */
+    .evidence-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .evidence-check {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border2);
+      border-radius: 2px; cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .evidence-check:hover { border-color: var(--accent2); background: rgba(255,62,108,0.04); }
+    .evidence-check input[type=checkbox] { accent-color: var(--accent2); width:14px; height:14px; }
+    .evidence-check-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--muted); letter-spacing: 1px;
+    }
+
+    /* Review card */
+    .review-section { margin-bottom: 20px; }
+    .review-block {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--border2);
+      border-radius: 2px; padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+    .review-block-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.62rem; font-weight: 700;
+      color: var(--accent); letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border2);
+    }
+    .review-row {
+      display: flex; justify-content: space-between;
+      align-items: flex-start;
+      padding: 6px 0; border-bottom: 1px solid rgba(10,37,64,0.5);
+    }
+    .review-row:last-child { border-bottom: none; }
+    .review-key {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.63rem; color: var(--muted); letter-spacing: 1px;
+      flex-shrink: 0; min-width: 140px;
+    }
+    .review-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; color: var(--text);
+      text-align: right; word-break: break-all;
+    }
+    .review-val.highlight { color: var(--accent2); }
+
+    /* NCRP notice */
+    .ncrp-notice {
+      display: flex; gap: 14px;
+      background: rgba(0,212,255,0.04);
+      border: 1px solid rgba(0,212,255,0.15);
+      border-radius: 2px; padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .ncrp-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .ncrp-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted); letter-spacing: 0.5px;
+      line-height: 1.7;
+    }
+    .ncrp-text strong { color: var(--accent); font-weight: normal; }
+
+    /* Form footer */
+    .form-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border2);
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+
+    .footer-left {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted); letter-spacing: 1px;
+    }
+
+    .footer-btns { display: flex; gap: 10px; }
+
+    .btn-back {
+      padding: 11px 22px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; cursor: pointer;
+      border-radius: 2px; transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+    .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-next {
+      padding: 11px 28px;
+      background: var(--accent2);
+      border: none; border-radius: 2px;
+      color: #fff;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer;
+      transition: opacity 0.2s, box-shadow 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .btn-next:hover { opacity: 0.88; box-shadow: 0 0 20px rgba(255,62,108,0.35); }
+
+    /* ── SUCCESS SCREEN ── */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 28px;
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    .success-hex {
+      width: 100px; height: 100px;
+      margin: 0 auto 24px;
+      position: relative;
+    }
+
+    .success-hex svg { width: 100%; height: 100%; }
+
+    .success-check {
+      position: absolute; inset:0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+      animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+    }
+
+    @keyframes popIn {
+      from { transform:scale(0); opacity:0; }
+      to   { transform:scale(1); opacity:1; }
+    }
+
+    .success-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.4rem; font-weight: 900;
+      color: var(--green);
+      text-shadow: 0 0 30px rgba(0,255,136,0.4);
+      letter-spacing: 3px; margin-bottom: 10px;
+    }
+
+    .success-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; color: var(--muted);
+      letter-spacing: 1px; margin-bottom: 28px; line-height: 1.8;
+    }
+
+    .complaint-id-box {
+      display: inline-block;
+      background: rgba(0,255,136,0.06);
+      border: 1px solid rgba(0,255,136,0.25);
+      border-radius: 2px; padding: 14px 32px;
+      margin-bottom: 28px;
+    }
+
+    .complaint-id-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      letter-spacing: 3px; text-transform: uppercase;
+    }
+
+    .complaint-id-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.4rem; font-weight: 900;
+      color: var(--green);
+      text-shadow: 0 0 20px rgba(0,255,136,0.4);
+      letter-spacing: 4px; margin-top: 4px;
+    }
+
+    .success-actions {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+
+    .btn-track {
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer;
+      border-radius: 2px; transition: all 0.25s;
+      text-decoration: none;
+    }
+    .btn-track:hover { background: rgba(0,255,136,0.1); box-shadow: 0 0 20px rgba(0,255,136,0.2); }
+
+    .btn-new {
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; cursor: pointer;
+      border-radius: 2px; transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-new:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Progress bar at bottom of card */
+    .form-progress {
+      height: 3px;
+      background: var(--border2);
+    }
+    .form-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent2), var(--orange));
+      transition: width 0.5s ease;
+    }
+
+    /* Responsive */
+    @media (max-width:700px) {
+      .grid-2 { grid-template-columns:1fr; }
+      .grid-3 { grid-template-columns:1fr 1fr; }
+      .fraud-type-grid { grid-template-columns:1fr 1fr; }
+      .evidence-grid { grid-template-columns:1fr; }
+      .step-connector { width:40px; }
+      .step-name { font-size:0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar-custom">
+  <a class="nav-brand" href="index.html">
+    <svg viewBox="0 0 32 32" fill="none">
+      <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#00d4ff" stroke-width="1.2" fill="rgba(0,212,255,0.05)"/>
+      <circle cx="16" cy="16" r="5" fill="none" stroke="#00d4ff" stroke-width="1.2"/>
+      <circle cx="16" cy="16" r="2" fill="#00d4ff"/>
+      <line x1="16" y1="11" x2="16" y2="7" stroke="#ff3e6c" stroke-width="1.2"/>
+    </svg>
+    <span class="nav-brand-text">Phish<span>Forensix</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="scanner.html">Scanner</a></li>
+    <li><a href="complaint.html" class="active">Complaint</a></li>
+    <li><a href="track.html">Track</a></li>
+  </ul>
+  <div class="nav-user">
+    <div class="nav-avatar">D</div>
+    <span>Dharmi</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-eyebrow"><div class="shield-dot"></div> CYBERCRIME REPORTING · NCRP COMPLIANT</div>
+    <h1 class="page-title">FILE A COMPLAINT</h1>
+    <p class="page-sub">// Secure · Encrypted · Directly forwarded to I4C & Cyber Cell //</p>
+  </div>
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step-item active" id="stepper-1">
+      <div class="step-circle">01</div>
+      <span class="step-name">Personal</span>
+    </div>
+    <div class="step-connector"><div class="fill" id="conn-1"></div></div>
+    <div class="step-item" id="stepper-2">
+      <div class="step-circle">02</div>
+      <span class="step-name">Incident</span>
+    </div>
+    <div class="step-connector"><div class="fill" id="conn-2"></div></div>
+    <div class="step-item" id="stepper-3">
+      <div class="step-circle">03</div>
+      <span class="step-name">Evidence</span>
+    </div>
+    <div class="step-connector"><div class="fill" id="conn-3"></div></div>
+    <div class="step-item" id="stepper-4">
+      <div class="step-circle">04</div>
+      <span class="step-name">Review</span>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card" id="formCard">
+
+    <!-- ═══ STEP 1: Personal Info ═══ -->
+    <div id="step1">
+      <div class="form-card-header">
+        <div class="step-badge">1</div>
+        <div class="step-header-info">
+          <h3>PERSONAL INFORMATION</h3>
+          <p>// Your details are AES-256 encrypted and never shared publicly //</p>
+        </div>
+      </div>
+      <div class="form-body">
+        <div class="grid-2">
+          <div class="field-group">
+            <label class="field-label">Full Name <span class="req">*</span></label>
+            <input class="field-input" type="text" id="f_name" placeholder="As per Aadhaar / ID"/>
+            <div class="field-error" id="err_name">Name is required</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Mobile Number <span class="req">*</span></label>
+            <input class="field-input" type="tel" id="f_mobile" placeholder="+91 XXXXX XXXXX"
+              oninput="validateMobile(this)"/>
+            <div class="field-hint">OTP verification will be sent</div>
+            <div class="field-error" id="err_mobile">Enter valid 10-digit mobile number</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field-group">
+            <label class="field-label">Email Address <span class="req">*</span></label>
+            <input class="field-input" type="email" id="f_email" placeholder="your@email.com"
+              oninput="validateEmail(this)"/>
+            <div class="field-error" id="err_email">Enter valid email address</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Aadhaar / ID Number</label>
+            <input class="field-input" type="text" id="f_aadhaar" placeholder="XXXX XXXX XXXX (optional)"/>
+            <div class="field-hint">Helps faster verification — optional</div>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="field-group">
+            <label class="field-label">State <span class="req">*</span></label>
+            <select class="field-select" id="f_state">
+              <option value="">Select State</option>
+              <option>Rajasthan</option><option>Maharashtra</option><option>Delhi</option>
+              <option>Karnataka</option><option>Tamil Nadu</option><option>Uttar Pradesh</option>
+              <option>Gujarat</option><option>West Bengal</option><option>Telangana</option>
+              <option>Madhya Pradesh</option><option>Punjab</option><option>Bihar</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">City</label>
+            <input class="field-input" type="text" id="f_city" placeholder="Your city"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">PIN Code</label>
+            <input class="field-input" type="text" id="f_pin" placeholder="XXXXXX" maxlength="6"/>
+          </div>
+        </div>
+      </div>
+      <div class="form-progress"><div class="form-progress-fill" style="width:25%"></div></div>
+      <div class="form-footer">
+        <span class="footer-left">STEP 1 OF 4 · PERSONAL DETAILS</span>
+        <div class="footer-btns">
+          <button class="btn-next" onclick="goToStep(2)">NEXT ⟩</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 2: Incident Details ═══ -->
+    <div id="step2" style="display:none;">
+      <div class="form-card-header">
+        <div class="step-badge">2</div>
+        <div class="step-header-info">
+          <h3>INCIDENT DETAILS</h3>
+          <p>// Describe the cyber fraud you experienced //</p>
+        </div>
+      </div>
+      <div class="form-body">
+
+        <div class="field-group">
+          <label class="field-label">Type of Cyber Fraud <span class="req">*</span></label>
+          <div class="fraud-type-grid" id="fraudTypeGrid">
+            <div class="fraud-type-card" onclick="selectFraud(this,'UPI / Payment Fraud')">
+              <div class="ft-icon">💳</div>
+              <div class="ft-name">UPI / Payment</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'Phishing / Fake Website')">
+              <div class="ft-icon">🎣</div>
+              <div class="ft-name">Phishing</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'OTP / SIM Swap Fraud')">
+              <div class="ft-icon">📱</div>
+              <div class="ft-name">OTP Scam</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'KYC / Aadhaar Update Fraud')">
+              <div class="ft-icon">🪪</div>
+              <div class="ft-name">KYC Fraud</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'Govt. Scheme / Impersonation')">
+              <div class="ft-icon">🏛</div>
+              <div class="ft-name">Govt. Scam</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'Banking / Loan Fraud')">
+              <div class="ft-icon">🏦</div>
+              <div class="ft-name">Banking</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'Job / Investment Fraud')">
+              <div class="ft-icon">📊</div>
+              <div class="ft-name">Investment</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'Identity Theft')">
+              <div class="ft-icon">👤</div>
+              <div class="ft-name">Identity Theft</div>
+            </div>
+            <div class="fraud-type-card" onclick="selectFraud(this,'Other Cyber Crime')">
+              <div class="ft-icon">⚠</div>
+              <div class="ft-name">Other</div>
+            </div>
+          </div>
+          <input type="hidden" id="f_fraud_type"/>
+          <div class="field-error" id="err_fraud">Please select a fraud type</div>
+        </div>
+
+        <div class="grid-2" style="margin-top:20px;">
+          <div class="field-group">
+            <label class="field-label">Fraudulent URL / Website <span class="req">*</span></label>
+            <input class="field-input" type="text" id="f_url" placeholder="http://suspicious-site.com"/>
+            <div class="field-error" id="err_url">URL is required</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Date of Incident <span class="req">*</span></label>
+            <input class="field-input" type="date" id="f_date" style="color-scheme:dark;"/>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field-group">
+            <label class="field-label">Financial Loss (if any)</label>
+            <div class="amount-wrap">
+              <span class="amount-prefix">₹</span>
+              <input class="field-input" type="number" id="f_amount" placeholder="0.00"/>
+            </div>
+            <div class="field-hint">Leave 0 if no financial loss</div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Payment Method Used</label>
+            <select class="field-select" id="f_payment">
+              <option value="">Select method</option>
+              <option>UPI (GPay / PhonePe / Paytm)</option>
+              <option>NEFT / RTGS / IMPS</option>
+              <option>Debit / Credit Card</option>
+              <option>Net Banking</option>
+              <option>Cryptocurrency</option>
+              <option>Cash</option>
+              <option>No Financial Transaction</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Incident Description <span class="req">*</span></label>
+          <textarea class="field-textarea" id="f_desc"
+            placeholder="Describe exactly what happened: How did you receive the link? What actions did you take? What data or money was compromised?..."
+            oninput="updateCharCount(this)"></textarea>
+          <div class="field-hint" style="display:flex;justify-content:space-between;">
+            <span>Be as specific as possible — more detail helps authorities act faster</span>
+            <span id="charCount">0 / 1000</span>
+          </div>
+          <div class="field-error" id="err_desc">Please describe the incident</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Suspect Details (if known)</label>
+          <input class="field-input" type="text" id="f_suspect"
+            placeholder="Phone number, name, UPI ID, email of suspect (if available)"/>
+        </div>
+
+      </div>
+      <div class="form-progress"><div class="form-progress-fill" style="width:50%"></div></div>
+      <div class="form-footer">
+        <span class="footer-left">STEP 2 OF 4 · INCIDENT DETAILS</span>
+        <div class="footer-btns">
+          <button class="btn-back" onclick="goToStep(1)">‹ BACK</button>
+          <button class="btn-next" onclick="goToStep(3)">NEXT ⟩</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 3: Evidence Upload ═══ -->
+    <div id="step3" style="display:none;">
+      <div class="form-card-header">
+        <div class="step-badge">3</div>
+        <div class="step-header-info">
+          <h3>UPLOAD EVIDENCE</h3>
+          <p>// Screenshots, transaction records, chat logs — all encrypted at rest //</p>
+        </div>
+      </div>
+      <div class="form-body">
+
+        <div class="field-group">
+          <label class="field-label">What type of evidence do you have?</label>
+          <div class="evidence-grid">
+            <label class="evidence-check">
+              <input type="checkbox" value="screenshot"/> 
+              <span class="evidence-check-label">📸 Website Screenshot</span>
+            </label>
+            <label class="evidence-check">
+              <input type="checkbox" value="transaction"/>
+              <span class="evidence-check-label">🧾 Transaction Receipt</span>
+            </label>
+            <label class="evidence-check">
+              <input type="checkbox" value="sms"/>
+              <span class="evidence-check-label">💬 SMS / WhatsApp Chat</span>
+            </label>
+            <label class="evidence-check">
+              <input type="checkbox" value="email"/>
+              <span class="evidence-check-label">📧 Email Screenshots</span>
+            </label>
+            <label class="evidence-check">
+              <input type="checkbox" value="bank"/>
+              <span class="evidence-check-label">🏦 Bank Statement</span>
+            </label>
+            <label class="evidence-check">
+              <input type="checkbox" value="other"/>
+              <span class="evidence-check-label">📎 Other Documents</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-top:20px;">
+          <label class="field-label">Upload Files</label>
+          <div class="upload-zone" id="uploadZone"
+            ondragover="event.preventDefault();this.classList.add('dragover')"
+            ondragleave="this.classList.remove('dragover')"
+            ondrop="handleDrop(event)">
+            <input type="file" multiple accept="image/*,.pdf,.doc,.docx"
+              id="fileInput" onchange="handleFiles(this.files)"/>
+            <div class="upload-icon-big">🗂</div>
+            <div class="upload-title">DRAG & DROP FILES HERE</div>
+            <div class="upload-sub">or <span>click to browse</span></div>
+            <div class="upload-sub" style="margin-top:6px;">PNG · JPG · PDF · DOC · Max 10MB per file</div>
+          </div>
+          <div class="file-list" id="fileList"></div>
+        </div>
+
+        <div class="ncrp-notice">
+          <div class="ncrp-icon">🔒</div>
+          <div class="ncrp-text">
+            All uploaded files are <strong>AES-256 encrypted</strong> and stored securely.
+            They will only be accessed by authorized <strong>I4C / Cyber Cell officers</strong> handling your case.
+            Uploading evidence significantly improves your <strong>chances of fund recovery</strong> within the Golden Hour.
+          </div>
+        </div>
+
+      </div>
+      <div class="form-progress"><div class="form-progress-fill" style="width:75%"></div></div>
+      <div class="form-footer">
+        <span class="footer-left">STEP 3 OF 4 · EVIDENCE UPLOAD</span>
+        <div class="footer-btns">
+          <button class="btn-back" onclick="goToStep(2)">‹ BACK</button>
+          <button class="btn-next" onclick="goToStep(4)">NEXT ⟩</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 4: Review & Submit ═══ -->
+    <div id="step4" style="display:none;">
+      <div class="form-card-header">
+        <div class="step-badge" style="background:var(--green);color:var(--bg);">4</div>
+        <div class="step-header-info">
+          <h3>REVIEW & SUBMIT</h3>
+          <p>// Please verify all details before submitting your complaint //</p>
+        </div>
+      </div>
+      <div class="form-body">
+
+        <div class="review-section" id="reviewContent">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="ncrp-notice" style="border-color:rgba(255,62,108,0.2);background:rgba(255,62,108,0.04);">
+          <div class="ncrp-icon">⚖</div>
+          <div class="ncrp-text">
+            By submitting, you confirm that all information provided is <strong style="color:var(--accent2)">true and accurate</strong>.
+            Filing a false complaint is a punishable offence under <strong style="color:var(--accent2)">Section 182 IPC</strong>.
+            Your complaint will be forwarded to the <strong style="color:var(--accent2)">1930 Cyber Helpline & I4C</strong>.
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="evidence-check" style="border-color:rgba(255,62,108,0.2);">
+            <input type="checkbox" id="f_agree"/>
+            <span class="evidence-check-label" style="color:var(--text);">
+              I confirm all details are accurate and I consent to this complaint being processed by I4C / Cyber Cell
+            </span>
+          </label>
+        </div>
+
+      </div>
+      <div class="form-progress"><div class="form-progress-fill" style="width:100%"></div></div>
+      <div class="form-footer">
+        <span class="footer-left">STEP 4 OF 4 · FINAL REVIEW</span>
+        <div class="footer-btns">
+          <button class="btn-back" onclick="goToStep(3)">‹ BACK</button>
+          <button class="btn-next" style="background:var(--green);color:var(--bg);" onclick="submitComplaint()">
+            ⚑ SUBMIT COMPLAINT
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SUCCESS ═══ -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-hex">
+        <svg viewBox="0 0 100 100">
+          <polygon points="50,5 93,27.5 93,72.5 50,95 7,72.5 7,27.5"
+            fill="rgba(0,255,136,0.06)" stroke="rgba(0,255,136,0.4)" stroke-width="1.5"/>
+          <polygon points="50,15 83,32.5 83,67.5 50,85 17,67.5 17,32.5"
+            fill="none" stroke="rgba(0,255,136,0.15)" stroke-width="1"/>
+        </svg>
+        <div class="success-check">✓</div>
+      </div>
+      <div class="success-title">COMPLAINT FILED!</div>
+      <div class="success-sub">
+        Your cybercrime complaint has been registered successfully.<br/>
+        Authorities have been notified. Track your case status below.
+      </div>
+      <div class="complaint-id-box">
+        <div class="complaint-id-label">YOUR COMPLAINT ID</div>
+        <div class="complaint-id-val" id="complaintIdDisplay">CMP-XXXX</div>
+      </div>
+      <div class="success-actions">
+        <a href="track.html" class="btn-track">⟩ TRACK STATUS</a>
+        <a href="scanner.html" class="btn-new">SCAN ANOTHER URL</a>
+      </div>
+    </div>
+
+  </div><!-- /form-card -->
+
+</div><!-- /page-wrap -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let currentStep = 1;
+  let selectedFraud = '';
+  let uploadedFiles = [];
+
+  /* ─────────── STEP NAVIGATION ─────────── */
+  function goToStep(target) {
+    if (target > currentStep && !validateStep(currentStep)) return;
+
+    // Update stepper UI
+    for (let i = 1; i <= 4; i++) {
+      const si = document.getElementById('stepper-' + i);
+      si.classList.remove('active', 'done');
+      if (i < target)      si.classList.add('done');
+      else if (i === target) si.classList.add('active');
+    }
+
+    // Fill connectors
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('conn-' + i).style.width = i < target ? '100%' : '0%';
+    }
+
+    // Show/hide step panels
+    for (let i = 1; i <= 4; i++) {
+      const panel = document.getElementById('step' + i);
+      if (panel) panel.style.display = i === target ? 'block' : 'none';
+    }
+
+    if (target === 4) buildReview();
+    currentStep = target;
+    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ─────────── VALIDATION ─────────── */
+  function validateStep(step) {
+    if (step === 1) {
+      let ok = true;
+      const name = document.getElementById('f_name').value.trim();
+      const mob  = document.getElementById('f_mobile').value.trim();
+      const email= document.getElementById('f_email').value.trim();
+      const state= document.getElementById('f_state').value;
+
+      showErr('err_name',   !name,  name === '');
+      showErr('err_mobile', !/^(\+91)?[6-9]\d{9}$/.test(mob.replace(/\s/g,'')), mob === '');
+      showErr('err_email',  !/\S+@\S+\.\S+/.test(email), email === '');
+
+      if (!name || !/^(\+91)?[6-9]\d{9}$/.test(mob.replace(/\s/g,'')) || !/\S+@\S+\.\S+/.test(email) || !state) ok = false;
+      return ok;
+    }
+
+    if (step === 2) {
+      let ok = true;
+      const url  = document.getElementById('f_url').value.trim();
+      const desc = document.getElementById('f_desc').value.trim();
+      const date = document.getElementById('f_date').value;
+
+      showErr('err_fraud', !selectedFraud, !selectedFraud);
+      showErr('err_url',   !url, !url);
+      showErr('err_desc',  !desc, !desc);
+
+      if (!selectedFraud || !url || !desc || !date) ok = false;
+      return ok;
+    }
+
+    return true;
+  }
+
+  function showErr(id, show) {
+    document.getElementById(id).style.display = show ? 'block' : 'none';
+  }
+
+  /* ─────────── FRAUD TYPE ─────────── */
+  function selectFraud(el, type) {
+    document.querySelectorAll('.fraud-type-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedFraud = type;
+    document.getElementById('f_fraud_type').value = type;
+    document.getElementById('err_fraud').style.display = 'none';
+  }
+
+  /* ─────────── VALIDATION HELPERS ─────────── */
+  function validateMobile(el) {
+    const v = el.value.replace(/\s/g,'');
+    el.className = 'field-input ' + (/^(\+91)?[6-9]\d{9}$/.test(v) ? 'valid' : v.length > 4 ? 'invalid' : '');
+  }
+
+  function validateEmail(el) {
+    const v = el.value.trim();
+    el.className = 'field-input ' + (/\S+@\S+\.\S+/.test(v) ? 'valid' : v.length > 3 ? 'invalid' : '');
+  }
+
+  function updateCharCount(el) {
+    const c = el.value.length;
+    document.getElementById('charCount').textContent = c + ' / 1000';
+    if (c > 1000) el.value = el.value.substring(0, 1000);
+  }
+
+  /* ─────────── FILE UPLOAD ─────────── */
+  function handleFiles(files) {
+    Array.from(files).forEach(f => {
+      if (!uploadedFiles.find(u => u.name === f.name)) uploadedFiles.push(f);
+    });
+    renderFiles();
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  }
+
+  function removeFile(i) {
+    uploadedFiles.splice(i, 1);
+    renderFiles();
+  }
+
+  function renderFiles() {
+    const list = document.getElementById('fileList');
+    list.innerHTML = uploadedFiles.map((f, i) => {
+      const icon = f.type.includes('image') ? '🖼' : f.type.includes('pdf') ? '📄' : '📎';
+      const size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+' MB' : (f.size/1024).toFixed(0)+' KB';
+      return `<div class="file-item">
+        <span class="file-icon">${icon}</span>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-size">${size}</div>
+        </div>
+        <button class="file-remove" onclick="removeFile(${i})">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  /* ─────────── REVIEW ─────────── */
+  function buildReview() {
+    const data = {
+      'Full Name':      document.getElementById('f_name').value,
+      'Mobile':         document.getElementById('f_mobile').value,
+      'Email':          document.getElementById('f_email').value,
+      'State / City':   document.getElementById('f_state').value + (document.getElementById('f_city').value ? ' / '+document.getElementById('f_city').value : ''),
+    };
+
+    const incident = {
+      'Fraud Type':     selectedFraud || '—',
+      'Reported URL':   document.getElementById('f_url').value || '—',
+      'Date':           document.getElementById('f_date').value || '—',
+      'Amount Lost':    '₹ ' + (document.getElementById('f_amount').value || '0'),
+      'Payment Method': document.getElementById('f_payment').value || '—',
+      'Suspect Info':   document.getElementById('f_suspect').value || 'Not provided',
+    };
+
+    const desc = document.getElementById('f_desc').value;
+
+    const html = `
+      <div class="review-block">
+        <div class="review-block-title">⟩ Personal Information</div>
+        ${Object.entries(data).map(([k,v]) => `
+          <div class="review-row">
+            <span class="review-key">${k}</span>
+            <span class="review-val">${v || '—'}</span>
+          </div>`).join('')}
+      </div>
+      <div class="review-block">
+        <div class="review-block-title">⟩ Incident Details</div>
+        ${Object.entries(incident).map(([k,v]) => `
+          <div class="review-row">
+            <span class="review-key">${k}</span>
+            <span class="review-val ${k==='Fraud Type'||k==='Reported URL'?'highlight':''}">${v}</span>
+          </div>`).join('')}
+        <div class="review-row">
+          <span class="review-key">Description</span>
+          <span class="review-val" style="max-width:380px;">${desc ? desc.substring(0,120)+'...' : '—'}</span>
+        </div>
+      </div>
+      <div class="review-block">
+        <div class="review-block-title">⟩ Evidence</div>
+        <div class="review-row">
+          <span class="review-key">Files Uploaded</span>
+          <span class="review-val">${uploadedFiles.length > 0 ? uploadedFiles.map(f=>f.name).join(', ') : 'No files uploaded'}</span>
+        </div>
+      </div>`;
+
+    document.getElementById('reviewContent').innerHTML = html;
+  }
+
+  /* ─────────── SUBMIT ─────────── */
+  function submitComplaint() {
+    if (!document.getElementById('f_agree').checked) {
+      alert('Please confirm the declaration to submit your complaint.');
+      return;
+    }
+
+    const id = 'CMP-' + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('complaintIdDisplay').textContent = id;
+
+    // Hide all steps, show success
+    for (let i = 1; i <= 4; i++) {
+      const p = document.getElementById('step' + i);
+      if (p) p.style.display = 'none';
+    }
+
+    const ss = document.getElementById('successScreen');
+    ss.style.display = 'block';
+
+    // Update stepper all done
+    for (let i = 1; i <= 4; i++) {
+      const si = document.getElementById('stepper-' + i);
+      si.classList.remove('active');
+      si.classList.add('done');
+    }
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('conn-' + i).style.width = '100%';
+    }
+
+    document.getElementById('formCard').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PhishForensix — Track Complaint</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:      #020c14;
+      --panel:   #061524;
+      --card:    #071b2e;
+      --border:  #0d3050;
+      --border2: #0a2540;
+      --accent:  #00d4ff;
+      --accent2: #ff3e6c;
+      --green:   #00ff88;
+      --orange:  #ff9f43;
+      --purple:  #a855f7;
+      --text:    #c8e6f5;
+      --muted:   #3a6a88;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.022) 1px, transparent 1px);
+      background-size: 44px 44px;
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar-custom {
+      position: sticky; top: 0; z-index: 100;
+      padding: 12px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(2,12,20,0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border2);
+    }
+    .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .nav-brand svg { width:28px; height:28px; }
+    .nav-brand-text { font-family:'Orbitron',monospace; font-size:0.9rem; font-weight:900; color:#fff; letter-spacing:1px; }
+    .nav-brand-text span { color:var(--accent2); }
+    .nav-links { display:flex; gap:24px; list-style:none; }
+    .nav-links a { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--muted); text-decoration:none; letter-spacing:2px; text-transform:uppercase; transition:color 0.2s; }
+    .nav-links a:hover { color:var(--accent); }
+    .nav-links a.active { color:var(--green); }
+    .nav-user { display:flex; align-items:center; gap:8px; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--muted); }
+    .nav-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--purple)); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',monospace; font-size:0.6rem; font-weight:700; color:var(--bg); }
+
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── PAGE WRAP ── */
+    .page-wrap {
+      position: relative; z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      text-align: center; margin-bottom: 36px;
+      animation: fadeInUp 0.5s ease both;
+    }
+    .page-eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--green);
+      letter-spacing: 4px; text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    .page-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.8rem; font-weight: 900;
+      color: #fff; letter-spacing: 2px; margin-bottom: 8px;
+    }
+    .page-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--muted); letter-spacing: 1px;
+    }
+
+    /* ── QUICK LOOKUP ── */
+    .lookup-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 22px 24px;
+      margin-bottom: 28px;
+      position: relative; overflow: hidden;
+      animation: fadeInUp 0.5s ease 0.1s both;
+    }
+    .lookup-card::before {
+      content: '';
+      position: absolute; top:0; left:0; right:0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--green), var(--accent), transparent);
+    }
+    .lookup-row { display:flex; gap:10px; align-items:stretch; }
+    .lookup-prefix {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--muted);
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-right: none; border-radius: 2px 0 0 2px;
+      padding: 0 14px;
+      display: flex; align-items: center;
+      letter-spacing: 1px; white-space: nowrap;
+    }
+    .lookup-input {
+      flex: 1;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      border-radius: 0 2px 2px 0;
+      padding: 12px 16px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem; color: var(--text);
+      letter-spacing: 3px; outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .lookup-input::placeholder { color: #1e4060; letter-spacing:2px; font-size:0.7rem; }
+    .lookup-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px rgba(0,255,136,0.1), 0 0 16px rgba(0,255,136,0.08);
+    }
+    .lookup-btn {
+      padding: 12px 24px;
+      background: var(--green);
+      border: none; border-radius: 2px;
+      color: var(--bg);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer;
+      transition: opacity 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .lookup-btn:hover { opacity:0.85; box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+
+    .quick-ids {
+      margin-top: 12px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .qi-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--muted); letter-spacing: 2px;
+    }
+    .qi-chip {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--accent);
+      background: rgba(0,212,255,0.06);
+      border: 1px solid rgba(0,212,255,0.15);
+      padding: 3px 10px; border-radius: 2px;
+      cursor: pointer; letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .qi-chip:hover { background: rgba(0,212,255,0.12); border-color: var(--accent); }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 12px; margin-bottom: 24px;
+      animation: fadeInUp 0.5s ease 0.15s both;
+    }
+    .stat-mini {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 2px; padding: 16px 18px;
+      position: relative; overflow: hidden;
+    }
+    .stat-mini::after {
+      content: '';
+      position: absolute; top:0; left:0; bottom:0;
+      width: 3px;
+    }
+    .stat-mini.s1::after { background: var(--accent); }
+    .stat-mini.s2::after { background: var(--orange); }
+    .stat-mini.s3::after { background: var(--green); }
+    .stat-mini.s4::after { background: var(--purple); }
+
+    .stat-mini-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem; font-weight: 900;
+      margin-bottom: 4px;
+    }
+    .s1 .stat-mini-val { color: var(--accent); }
+    .s2 .stat-mini-val { color: var(--orange); }
+    .s3 .stat-mini-val { color: var(--green); }
+    .s4 .stat-mini-val { color: var(--purple); }
+
+    .stat-mini-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 18px;
+      animation: fadeInUp 0.5s ease 0.2s both;
+    }
+
+    /* ── COMPLAINT DETAIL CARD ── */
+    .detail-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+    .detail-card::before {
+      content: '';
+      position: absolute; top:0; left:0; right:0; height:2px;
+      background: linear-gradient(90deg, var(--green), var(--accent), transparent);
+    }
+
+    .detail-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+    }
+
+    .detail-id {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem; font-weight: 700;
+      color: var(--text); letter-spacing: 3px;
+    }
+
+    .detail-id span { color: var(--green); }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 2px;
+      padding: 5px 14px; border-radius: 20px;
+      text-transform: uppercase;
+    }
+    .status-pill .pill-dot { width:7px; height:7px; border-radius:50%; animation: blink 1.5s ease-in-out infinite; }
+
+    .pill-open     { background:rgba(255,62,108,0.1); color:var(--accent2); border:1px solid rgba(255,62,108,0.3); }
+    .pill-open     .pill-dot { background:var(--accent2); box-shadow:0 0 6px var(--accent2); }
+    .pill-review   { background:rgba(255,159,67,0.1); color:var(--orange); border:1px solid rgba(255,159,67,0.3); }
+    .pill-review   .pill-dot { background:var(--orange); box-shadow:0 0 6px var(--orange); }
+    .pill-progress { background:rgba(0,212,255,0.1); color:var(--accent); border:1px solid rgba(0,212,255,0.3); }
+    .pill-progress .pill-dot { background:var(--accent); box-shadow:0 0 6px var(--accent); }
+    .pill-resolved { background:rgba(0,255,136,0.1); color:var(--green); border:1px solid rgba(0,255,136,0.3); }
+    .pill-resolved .pill-dot { background:var(--green); box-shadow:0 0 6px var(--green); animation:none; }
+
+    /* Info grid inside detail */
+    .info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0; border-bottom: 1px solid var(--border2);
+    }
+    .info-cell {
+      padding: 14px 22px;
+      border-right: 1px solid var(--border2);
+      border-bottom: 1px solid var(--border2);
+    }
+    .info-cell:nth-child(even) { border-right: none; }
+    .info-cell:nth-last-child(-n+2) { border-bottom: none; }
+    .info-key {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px;
+    }
+    .info-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; color: var(--text);
+      word-break: break-all;
+    }
+    .info-val.danger { color: var(--accent2); }
+    .info-val.safe   { color: var(--green); }
+    .info-val.warn   { color: var(--orange); }
+
+    /* ── TIMELINE ── */
+    .timeline-wrap { padding: 22px; }
+
+    .timeline-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.68rem; font-weight: 700;
+      color: var(--text); letter-spacing: 2px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute; left: 9px; top: 8px; bottom: 8px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--green), var(--accent), var(--orange), var(--border2));
+    }
+
+    .tl-item {
+      position: relative;
+      padding-bottom: 22px;
+    }
+
+    .tl-item:last-child { padding-bottom: 0; }
+
+    .tl-dot {
+      position: absolute;
+      left: -24px; top: 4px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      z-index: 1;
+      transition: box-shadow 0.3s;
+    }
+
+    .tl-dot.done     { background: var(--green); box-shadow: 0 0 10px rgba(0,255,136,0.5); }
+    .tl-dot.active   { background: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.5); animation: blink 1.5s ease-in-out infinite; }
+    .tl-dot.pending  { background: var(--border); }
+    .tl-dot.flagged  { background: var(--accent2); box-shadow: 0 0 10px rgba(255,62,108,0.5); }
+
+    .tl-date {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem; color: var(--muted);
+      letter-spacing: 1px; margin-bottom: 4px;
+    }
+
+    .tl-event {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; font-weight: 600;
+      color: var(--text); margin-bottom: 2px;
+    }
+
+    .tl-desc {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 0.5px; line-height: 1.6;
+    }
+
+    .tl-officer {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--accent);
+      background: rgba(0,212,255,0.06);
+      border: 1px solid rgba(0,212,255,0.15);
+      padding: 3px 10px; border-radius: 2px; letter-spacing: 1px;
+    }
+
+    /* ── RIGHT SIDEBAR ── */
+    .sidebar-col { display: flex; flex-direction: column; gap: 14px; }
+
+    .side-card {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .side-card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border2);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem; font-weight: 700;
+      color: var(--text); letter-spacing: 2px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .side-card-body { padding: 14px 16px; }
+
+    /* Progress tracker */
+    .progress-stages {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .stage-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .stage-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; flex-shrink: 0;
+      border: 1px solid var(--border2);
+      background: rgba(0,0,0,0.3);
+    }
+
+    .stage-icon.done    { background:rgba(0,255,136,0.1); border-color:rgba(0,255,136,0.3); }
+    .stage-icon.active  { background:rgba(0,212,255,0.1); border-color:rgba(0,212,255,0.3); animation:blink 2s ease-in-out infinite; }
+    .stage-icon.pending { opacity:0.35; }
+
+    .stage-info { flex:1; }
+    .stage-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+    .stage-row.done   .stage-name { color: var(--green); }
+    .stage-row.active .stage-name { color: var(--accent); }
+    .stage-row.pending .stage-name { color: var(--muted); }
+
+    .stage-date {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem; color: var(--muted);
+      letter-spacing: 0.5px; margin-top: 1px;
+    }
+
+    .stage-check {
+      font-size: 0.7rem; flex-shrink: 0;
+      width: 16px; text-align: center;
+    }
+
+    /* My complaints list */
+    .complaint-list { display: flex; flex-direction: column; gap: 0; }
+
+    .clist-item {
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border2);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .clist-item:last-child { border-bottom: none; }
+    .clist-item:hover { background: rgba(0,212,255,0.03); margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+    .clist-item.active-item { background: rgba(0,212,255,0.05); margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-left: 2px solid var(--accent); }
+
+    .cl-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:3px; }
+    .cl-id { font-family:'Orbitron',monospace; font-size:0.68rem; color:var(--text); letter-spacing:1px; }
+    .cl-badge { font-family:'Share Tech Mono',monospace; font-size:0.55rem; padding:2px 8px; border-radius:2px; letter-spacing:1px; }
+    .b-open     { background:rgba(255,62,108,0.12); color:var(--accent2); border:1px solid rgba(255,62,108,0.2); }
+    .b-review   { background:rgba(255,159,67,0.12); color:var(--orange);  border:1px solid rgba(255,159,67,0.2); }
+    .b-progress { background:rgba(0,212,255,0.08);  color:var(--accent);  border:1px solid rgba(0,212,255,0.2); }
+    .b-resolved { background:rgba(0,255,136,0.08);  color:var(--green);   border:1px solid rgba(0,255,136,0.2); }
+
+    .cl-url { font-family:'Share Tech Mono',monospace; font-size:0.62rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:0.5px; }
+    .cl-date { font-family:'Share Tech Mono',monospace; font-size:0.58rem; color:var(--muted2); margin-top:2px; }
+
+    /* Evidence chips */
+    .evidence-chips { display:flex; flex-wrap:wrap; gap:6px; }
+    .ev-chip {
+      font-family:'Share Tech Mono',monospace; font-size:0.6rem;
+      padding:4px 10px; border-radius:2px;
+      background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.15);
+      color:var(--muted); letter-spacing:1px;
+      display:flex; align-items:center; gap:5px;
+    }
+
+    /* Add note */
+    .add-note-area {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 2px; padding: 10px 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; color: var(--text);
+      resize: none; outline: none; min-height: 70px;
+      transition: border-color 0.3s;
+    }
+    .add-note-area:focus { border-color: var(--accent); }
+    .add-note-area::placeholder { color: #1e4060; }
+
+    .btn-send {
+      margin-top: 8px;
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer;
+      border-radius: 2px; transition: all 0.25s;
+    }
+    .btn-send:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 16px rgba(0,212,255,0.3); }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 60px 28px;
+      display: none;
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 14px; opacity:0.4; }
+    .empty-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.8rem; color: var(--muted);
+      letter-spacing: 2px; margin-bottom: 6px;
+    }
+    .empty-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--muted2); letter-spacing: 1px;
+    }
+
+    /* No result banner */
+    .notfound-banner {
+      background: rgba(255,62,108,0.06);
+      border: 1px solid rgba(255,62,108,0.2);
+      border-radius: 2px; padding: 16px 20px;
+      display: none; margin-top: 10px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; color: var(--accent2); letter-spacing: 1px;
+    }
+
+    /* Pulse animation for active dot */
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+      70%  { box-shadow: 0 0 0 8px rgba(0,212,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,212,255,0); }
+    }
+
+    /* ── GOLDEN HOUR BANNER ── */
+    .golden-banner {
+      background: linear-gradient(135deg, rgba(255,159,67,0.08), rgba(255,62,108,0.06));
+      border: 1px solid rgba(255,159,67,0.25);
+      border-radius: 2px; padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.5s ease 0.12s both;
+    }
+    .golden-icon { font-size:1.6rem; flex-shrink:0; }
+    .golden-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--orange);
+      letter-spacing: 1px; line-height: 1.7;
+    }
+    .golden-text strong { color: #fff; }
+
+    /* Responsive */
+    @media (max-width:900px) {
+      .main-layout { grid-template-columns:1fr; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:540px) {
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .info-grid { grid-template-columns:1fr; }
+      .info-cell { border-right:none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar-custom">
+  <a class="nav-brand" href="index.html">
+    <svg viewBox="0 0 32 32" fill="none">
+      <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#00d4ff" stroke-width="1.2" fill="rgba(0,212,255,0.05)"/>
+      <circle cx="16" cy="16" r="5" fill="none" stroke="#00d4ff" stroke-width="1.2"/>
+      <circle cx="16" cy="16" r="2" fill="#00d4ff"/>
+      <line x1="16" y1="11" x2="16" y2="7" stroke="#ff3e6c" stroke-width="1.2"/>
+    </svg>
+    <span class="nav-brand-text">Phish<span>Forensix</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="scanner.html">Scanner</a></li>
+    <li><a href="complaint.html">Complaint</a></li>
+    <li><a href="track.html" class="active">Track</a></li>
+  </ul>
+  <div class="nav-user">
+    <div class="nav-avatar">D</div>
+    <span>Dharmi</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-eyebrow"><div class="live-dot"></div> LIVE CASE MONITORING · I4C INTEGRATED</div>
+    <h1 class="page-title">TRACK COMPLAINT</h1>
+    <p class="page-sub">// Enter your Complaint ID to view real-time case status and updates //</p>
+  </div>
+
+  <!-- Lookup -->
+  <div class="lookup-card">
+    <div class="lookup-row">
+      <div class="lookup-prefix">CMP-ID ›</div>
+      <input class="lookup-input" type="text" id="lookupInput"
+        placeholder="e.g. CMP-3847"
+        maxlength="10"
+        oninput="this.value=this.value.toUpperCase()"/>
+      <button class="lookup-btn" onclick="lookupComplaint()">⟩ TRACK</button>
+    </div>
+    <div class="quick-ids">
+      <span class="qi-label">DEMO IDs:</span>
+      <span class="qi-chip" onclick="setAndLoad('CMP-3847')">CMP-3847 🔴</span>
+      <span class="qi-chip" onclick="setAndLoad('CMP-2291')">CMP-2291 🟡</span>
+      <span class="qi-chip" onclick="setAndLoad('CMP-1104')">CMP-1104 🔵</span>
+      <span class="qi-chip" onclick="setAndLoad('CMP-5523')">CMP-5523 🟢</span>
+    </div>
+    <div class="notfound-banner" id="notFoundBanner">
+      ⚠ Complaint ID not found. Please check the ID and try again.
+    </div>
+  </div>
+
+  <!-- Golden Hour Banner -->
+  <div class="golden-banner" id="goldenBanner" style="display:none;">
+    <div class="golden-icon">⚡</div>
+    <div class="golden-text">
+      <strong>GOLDEN HOUR ALERT:</strong> Your complaint was filed recently.
+      The next 24–48 hours are critical for fund recovery.
+      Authorities have been notified via <strong>1930 Cyber Helpline</strong>. Stay available on your registered mobile.
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row" id="statsRow" style="display:none;">
+    <div class="stat-mini s1">
+      <div class="stat-mini-val" id="s-total">0</div>
+      <div class="stat-mini-label">Total Complaints</div>
+    </div>
+    <div class="stat-mini s2">
+      <div class="stat-mini-val" id="s-open">0</div>
+      <div class="stat-mini-label">Under Review</div>
+    </div>
+    <div class="stat-mini s3">
+      <div class="stat-mini-val" id="s-resolved">0</div>
+      <div class="stat-mini-label">Resolved</div>
+    </div>
+    <div class="stat-mini s4">
+      <div class="stat-mini-val" id="s-amount">₹0</div>
+      <div class="stat-mini-label">Amount Reported</div>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="main-layout" id="mainLayout" style="display:none;">
+
+    <!-- LEFT: Detail Card -->
+    <div class="detail-card">
+      <div class="detail-header">
+        <div>
+          <div class="detail-id">COMPLAINT <span id="d-id">—</span></div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:1px;margin-top:3px;" id="d-filed">Filed: —</div>
+        </div>
+        <div class="status-pill" id="d-status-pill">
+          <div class="pill-dot"></div>
+          <span id="d-status-text">—</span>
+        </div>
+      </div>
+
+      <!-- Info grid -->
+      <div class="info-grid">
+        <div class="info-cell">
+          <div class="info-key">Complainant</div>
+          <div class="info-val" id="d-name">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-key">Mobile</div>
+          <div class="info-val" id="d-mobile">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-key">Fraud Type</div>
+          <div class="info-val danger" id="d-type">—</div>
+        </div>
+        <div class="info-cell">
+          <div class="info-key">Amount Lost</div>
+          <div class="info-val warn" id="d-amount">—</div>
+        </div>
+        <div class="info-cell" style="grid-column:1/-1;border-bottom:none;">
+          <div class="info-key">Reported URL</div>
+          <div class="info-val danger" id="d-url" style="word-break:break-all;">—</div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline-wrap">
+        <div class="timeline-title">
+          📡 CASE TIMELINE
+        </div>
+        <div class="timeline" id="timelineWrap">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Evidence -->
+      <div style="padding:0 22px 22px;">
+        <div style="font-family:'Orbitron',monospace;font-size:0.65rem;font-weight:700;color:var(--text);letter-spacing:2px;margin-bottom:10px;">
+          📎 EVIDENCE FILES
+        </div>
+        <div class="evidence-chips" id="evidenceChips"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar-col">
+
+      <!-- Case Progress -->
+      <div class="side-card">
+        <div class="side-card-header">⬡ CASE PROGRESS</div>
+        <div class="side-card-body">
+          <div class="progress-stages" id="progressStages">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- My Complaints -->
+      <div class="side-card">
+        <div class="side-card-header">📋 MY COMPLAINTS</div>
+        <div class="side-card-body" style="padding:0 16px;">
+          <div class="complaint-list" id="complaintList">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Note -->
+      <div class="side-card">
+        <div class="side-card-header">💬 ADD INFO / NOTE</div>
+        <div class="side-card-body">
+          <textarea class="add-note-area" id="noteArea"
+            placeholder="Add any new information, suspect details, or additional evidence to your complaint..."></textarea>
+          <button class="btn-send" onclick="sendNote()">⟩ SEND TO OFFICER</button>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="side-card">
+        <div class="side-card-header">📞 HELPLINE</div>
+        <div class="side-card-body">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.15);border-radius:2px;">
+              <span style="font-size:1.3rem;">📞</span>
+              <div>
+                <div style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:var(--green);letter-spacing:2px;">1930</div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:1px;">National Cyber Crime Helpline</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:2px;">
+              <span style="font-size:1.3rem;">🌐</span>
+              <div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;font-weight:700;color:var(--accent);letter-spacing:1px;">cybercrime.gov.in</div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:1px;">NCRP Official Portal</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /main-layout -->
+
+  <!-- Empty state (default) -->
+  <div class="empty-state" id="emptyState" style="display:block;">
+    <div class="empty-icon">🔍</div>
+    <div class="empty-title">NO COMPLAINT LOADED</div>
+    <div class="empty-sub">Enter a Complaint ID above or click a demo ID to view case details</div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+/* ══════════════════════════════════
+   COMPLAINT DATABASE (Demo)
+══════════════════════════════════ */
+const complaints = {
+  'CMP-3847': {
+    id: 'CMP-3847', name: 'Dharmi Sharma', mobile: '+91 98XXX XXXXX',
+    type: 'UPI / Payment Fraud', amount: '₹ 12,500',
+    url: 'http://secure-hdfc-verify.phish-login.com/auth/login',
+    filed: '2026-02-17 09:14', state: 'Rajasthan',
+    status: 'review', golden: true,
+    evidence: ['📸 screenshot_hdfc.png', '🧾 upi_transaction.pdf', '💬 whatsapp_chat.jpg'],
+    timeline: [
+      { dot:'done',  date:'2026-02-17 09:14', event:'Complaint Registered',    desc:'Your complaint has been successfully registered in the NCRP portal.', officer:null },
+      { dot:'done',  date:'2026-02-17 10:02', event:'AI Threat Verified',      desc:'PhishForensix ML model confirmed phishing URL with 94% confidence.', officer:null },
+      { dot:'done',  date:'2026-02-17 11:30', event:'Forwarded to Cyber Cell', desc:'Case escalated to Rajasthan Cyber Cell & 1930 Helpline.', officer:'Officer Rajveer Singh · Badge #RC-441' },
+      { dot:'active',date:'2026-02-18 08:45', event:'Under Investigation',     desc:'Assigned officer is analyzing suspect UPI account and tracing transactions.', officer:'Inspector Meena Choudhary · CID Jaipur' },
+      { dot:'pending',date:'—',               event:'Bank Account Freeze',     desc:'Awaiting court order to freeze suspect account.', officer:null },
+      { dot:'pending',date:'—',               event:'Case Resolution',         desc:'Pending investigation completion.', officer:null },
+    ],
+    stages: [
+      { name:'Complaint Filed',     status:'done',    date:'Feb 17, 9:14 AM',  icon:'✓' },
+      { name:'Verified by AI',      status:'done',    date:'Feb 17, 10:02 AM', icon:'✓' },
+      { name:'Sent to Cyber Cell',  status:'done',    date:'Feb 17, 11:30 AM', icon:'✓' },
+      { name:'Under Investigation', status:'active',  date:'In Progress',      icon:'◉' },
+      { name:'Action Taken',        status:'pending', date:'Pending',          icon:'○' },
+      { name:'Case Resolved',       status:'pending', date:'Pending',          icon:'○' },
+    ]
+  },
+  'CMP-2291': {
+    id: 'CMP-2291', name: 'Priya Patel', mobile: '+91 97XXX XXXXX',
+    type: 'KYC / Aadhaar Fraud', amount: '₹ 0',
+    url: 'http://aadhaar-link-now.xyz/verify',
+    filed: '2026-02-15 14:22', state: 'Maharashtra',
+    status: 'progress', golden: false,
+    evidence: ['📸 fake_aadhaar_site.png', '📧 phish_email.jpg'],
+    timeline: [
+      { dot:'done',  date:'2026-02-15 14:22', event:'Complaint Registered',    desc:'Complaint filed via PhishForensix portal.', officer:null },
+      { dot:'done',  date:'2026-02-15 15:10', event:'AI Threat Verified',      desc:'URL confirmed as phishing with 89% confidence.', officer:null },
+      { dot:'done',  date:'2026-02-16 09:00', event:'Forwarded to Cyber Cell', desc:'Sent to Maharashtra Cyber Crime Cell.', officer:'Officer Suhas More · Badge #MC-287' },
+      { dot:'done',  date:'2026-02-17 11:00', event:'URL Blacklisted',         desc:'Fraudulent domain added to national blacklist.', officer:'Cyber Cell Team · Mumbai' },
+      { dot:'active',date:'2026-02-18 00:00', event:'Domain Takedown',         desc:'Legal notice issued to domain registrar for takedown.', officer:'Inspector Priya Joshi · MCC' },
+      { dot:'pending',date:'—',               event:'Case Resolution',         desc:'Awaiting domain removal confirmation.', officer:null },
+    ],
+    stages: [
+      { name:'Complaint Filed',    status:'done',   date:'Feb 15, 2:22 PM', icon:'✓' },
+      { name:'Verified by AI',     status:'done',   date:'Feb 15, 3:10 PM', icon:'✓' },
+      { name:'Sent to Cyber Cell', status:'done',   date:'Feb 16, 9:00 AM', icon:'✓' },
+      { name:'URL Blacklisted',    status:'done',   date:'Feb 17, 11:00 AM',icon:'✓' },
+      { name:'Domain Takedown',    status:'active', date:'In Progress',     icon:'◉' },
+      { name:'Case Resolved',      status:'pending',date:'Pending',         icon:'○' },
+    ]
+  },
+  'CMP-1104': {
+    id: 'CMP-1104', name: 'Ravi Kumar', mobile: '+91 96XXX XXXXX',
+    type: 'Phishing / Fake Website', amount: '₹ 3,200',
+    url: 'http://irctc-refund-claim.xyz/process/verify',
+    filed: '2026-02-10 08:30', state: 'Delhi',
+    status: 'progress', golden: false,
+    evidence: ['📸 irctc_fake.png', '🧾 ticket_receipt.pdf'],
+    timeline: [
+      { dot:'done', date:'2026-02-10 08:30', event:'Complaint Registered',    desc:'Case registered in NCRP.', officer:null },
+      { dot:'done', date:'2026-02-10 09:05', event:'AI Threat Verified',      desc:'URL confirmed phishing — IRCTC impersonation.', officer:null },
+      { dot:'done', date:'2026-02-10 12:00', event:'Forwarded to Cyber Cell', desc:'Sent to Delhi Cyber Crime Unit.', officer:'Officer Anil Kumar · Badge #DC-119' },
+      { dot:'done', date:'2026-02-12 10:30', event:'Suspect Identified',      desc:'UPI account linked to suspect identified via RBI gateway.', officer:'Inspector Rahul Dev · DCU' },
+      { dot:'done', date:'2026-02-14 16:00', event:'Bank Account Frozen',     desc:'Suspect bank account frozen pending further proceedings.', officer:'DCU Legal Team' },
+      { dot:'active',date:'2026-02-18 00:00',event:'Recovery in Process',     desc:'₹3,200 recovery initiated. Expect resolution in 7–14 days.', officer:'Magistrate Court · Delhi' },
+    ],
+    stages: [
+      { name:'Complaint Filed',    status:'done',  date:'Feb 10, 8:30 AM',  icon:'✓' },
+      { name:'Verified by AI',     status:'done',  date:'Feb 10, 9:05 AM',  icon:'✓' },
+      { name:'Sent to Cyber Cell', status:'done',  date:'Feb 10, 12:00 PM', icon:'✓' },
+      { name:'Suspect Identified', status:'done',  date:'Feb 12, 10:30 AM', icon:'✓' },
+      { name:'Account Frozen',     status:'done',  date:'Feb 14, 4:00 PM',  icon:'✓' },
+      { name:'Recovery Process',   status:'active',date:'In Progress',      icon:'◉' },
+    ]
+  },
+  'CMP-5523': {
+    id: 'CMP-5523', name: 'Anita Singh', mobile: '+91 95XXX XXXXX',
+    type: 'Banking / Loan Fraud', amount: '₹ 8,000',
+    url: 'http://sbi-account-blocked.top/secure/login',
+    filed: '2026-01-28 17:45', state: 'Karnataka',
+    status: 'resolved', golden: false,
+    evidence: ['📸 sbi_phish.png', '🧾 bank_statement.pdf', '💬 sms_screenshot.jpg'],
+    timeline: [
+      { dot:'done', date:'2026-01-28 17:45', event:'Complaint Registered',    desc:'Case registered.', officer:null },
+      { dot:'done', date:'2026-01-28 18:10', event:'AI Threat Verified',      desc:'SBI impersonation confirmed — 97% phishing confidence.', officer:null },
+      { dot:'done', date:'2026-01-29 09:00', event:'Forwarded to Cyber Cell', desc:'Karnataka Cyber Crime Cell notified.', officer:'Officer Lakshmi R · Badge #KC-334' },
+      { dot:'done', date:'2026-01-31 14:00', event:'Suspect Arrested',        desc:'Suspect identified and arrested in Bengaluru.', officer:'Inspector Suresh Naik · KCC' },
+      { dot:'done', date:'2026-02-05 11:00', event:'Amount Recovered',        desc:'₹8,000 fully recovered and transferred to complainant.', officer:'KCC Financial Unit' },
+      { dot:'done', date:'2026-02-05 12:30', event:'Case Closed ✓',           desc:'Case successfully resolved. Thank you for using PhishForensix.', officer:null },
+    ],
+    stages: [
+      { name:'Complaint Filed',    status:'done', date:'Jan 28, 5:45 PM', icon:'✓' },
+      { name:'Verified by AI',     status:'done', date:'Jan 28, 6:10 PM', icon:'✓' },
+      { name:'Sent to Cyber Cell', status:'done', date:'Jan 29, 9:00 AM', icon:'✓' },
+      { name:'Suspect Arrested',   status:'done', date:'Jan 31, 2:00 PM', icon:'✓' },
+      { name:'Amount Recovered',   status:'done', date:'Feb 5, 11:00 AM', icon:'✓' },
+      { name:'Case Resolved',      status:'done', date:'Feb 5, 12:30 PM', icon:'✓' },
+    ]
+  }
+};
+
+const myComplaints = ['CMP-3847','CMP-2291','CMP-1104','CMP-5523'];
+let activeId = null;
+
+/* ── LOOKUP ── */
+function setAndLoad(id) {
+  document.getElementById('lookupInput').value = id;
+  lookupComplaint();
+}
+
+function lookupComplaint() {
+  const id = document.getElementById('lookupInput').value.trim().toUpperCase();
+  const c  = complaints[id];
+
+  document.getElementById('notFoundBanner').style.display = 'none';
+
+  if (!c) {
+    document.getElementById('notFoundBanner').style.display = 'block';
+    document.getElementById('mainLayout').style.display  = 'none';
+    document.getElementById('statsRow').style.display    = 'none';
+    document.getElementById('goldenBanner').style.display= 'none';
+    document.getElementById('emptyState').style.display  = 'block';
+    return;
+  }
+
+  activeId = id;
+  loadComplaint(c);
+}
+
+function loadComplaint(c) {
+  // Hide empty, show content
+  document.getElementById('emptyState').style.display  = 'none';
+  document.getElementById('notFoundBanner').style.display = 'none';
+  document.getElementById('statsRow').style.display    = 'grid';
+  document.getElementById('mainLayout').style.display  = 'grid';
+  document.getElementById('goldenBanner').style.display = c.golden ? 'flex' : 'none';
+
+  // Stats
+  animateVal('s-total', 4);
+  animateVal('s-open', 2);
+  animateVal('s-resolved', 1);
+  document.getElementById('s-amount').textContent = '₹24,200';
+
+  // Header
+  document.getElementById('d-id').textContent    = c.id;
+  document.getElementById('d-filed').textContent = 'Filed: ' + c.filed + ' · ' + c.state;
+
+  // Status pill
+  const pill = document.getElementById('d-status-pill');
+  const pillClasses = { open:'pill-open', review:'pill-review', progress:'pill-progress', resolved:'pill-resolved' };
+  const pillLabels  = { open:'OPEN', review:'UNDER REVIEW', progress:'IN PROGRESS', resolved:'RESOLVED ✓' };
+  pill.className = 'status-pill ' + (pillClasses[c.status] || 'pill-open');
+  document.getElementById('d-status-text').textContent = pillLabels[c.status] || 'OPEN';
+
+  // Info
+  document.getElementById('d-name').textContent   = c.name;
+  document.getElementById('d-mobile').textContent = c.mobile;
+  document.getElementById('d-type').textContent   = c.type;
+  document.getElementById('d-amount').textContent = c.amount;
+  document.getElementById('d-url').textContent    = c.url;
+
+  // Timeline
+  const tw = document.getElementById('timelineWrap');
+  tw.innerHTML = c.timeline.map(t => `
+    <div class="tl-item">
+      <div class="tl-dot ${t.dot}"></div>
+      <div class="tl-date">${t.date}</div>
+      <div class="tl-event">${t.event}</div>
+      <div class="tl-desc">${t.desc}</div>
+      ${t.officer ? `<div class="tl-officer">👮 ${t.officer}</div>` : ''}
+    </div>`).join('');
+
+  // Evidence
+  document.getElementById('evidenceChips').innerHTML = c.evidence.map(e =>
+    `<div class="ev-chip">${e}</div>`).join('');
+
+  // Progress stages
+  document.getElementById('progressStages').innerHTML = c.stages.map(s => `
+    <div class="stage-row ${s.status}">
+      <div class="stage-icon ${s.status}">${s.icon}</div>
+      <div class="stage-info">
+        <div class="stage-name">${s.name}</div>
+        <div class="stage-date">${s.date}</div>
+      </div>
+      <div class="stage-check">${s.status === 'done' ? '<span style="color:var(--green)">✓</span>' : s.status === 'active' ? '<span style="color:var(--accent)">◉</span>' : ''}</div>
+    </div>`).join('');
+
+  // My complaints list
+  const cl = document.getElementById('complaintList');
+  cl.innerHTML = myComplaints.map(cid => {
+    const cc = complaints[cid];
+    const bClass = { open:'b-open', review:'b-review', progress:'b-progress', resolved:'b-resolved' }[cc.status];
+    const bLabel = { open:'OPEN', review:'REVIEW', progress:'IN PROG', resolved:'CLOSED' }[cc.status];
+    return `<div class="clist-item ${cid === activeId ? 'active-item' : ''}" onclick="setAndLoad('${cid}')">
+      <div class="cl-top">
+        <span class="cl-id">${cid}</span>
+        <span class="cl-badge ${bClass}">${bLabel}</span>
+      </div>
+      <div class="cl-url">${cc.url.replace('http://','').substring(0,35)}...</div>
+      <div class="cl-date">${cc.filed.split(' ')[0]}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mainLayout').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function animateVal(id, target) {
+  const el = document.getElementById(id);
+  let v = 0;
+  const t = setInterval(() => {
+    v++;
+    el.textContent = v;
+    if (v >= target) clearInterval(t);
+  }, 120);
+}
+
+function sendNote() {
+  const note = document.getElementById('noteArea').value.trim();
+  if (!note) return;
+  alert('✅ Note sent to assigned officer. You will be notified of any updates.');
+  document.getElementById('noteArea').value = '';
+}
+
+/* Enter key for lookup */
+document.getElementById('lookupInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') lookupComplaint();
+});
+</script>
+</body>
+</html>

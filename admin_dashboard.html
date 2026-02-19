@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PhishForensix — Admin Command Center</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:       #020c14;
+      --sidebar:  #040f1a;
+      --panel:    #061524;
+      --card:     #071b2e;
+      --border:   #0d3050;
+      --border2:  #0a2540;
+      --accent:   #00d4ff;
+      --accent2:  #ff3e6c;
+      --green:    #00ff88;
+      --orange:   #ff9f43;
+      --purple:   #a855f7;
+      --text:     #c8e6f5;
+      --muted:    #3a6a88;
+      --muted2:   #1e4060;
+      --glow:     0 0 20px rgba(0,212,255,0.3);
+      --glow-red: 0 0 20px rgba(255,62,108,0.3);
+      --sidebar-w: 240px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Grid BG */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ═══════════════ SIDEBAR ═══════════════ */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-logo {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-hex {
+      width: 36px; height: 36px; flex-shrink: 0;
+    }
+
+    .logo-text h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+    .logo-text h2 span { color: var(--accent2); }
+    .logo-text p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-top: 2px;
+    }
+
+    .sidebar-section {
+      padding: 14px 16px 6px;
+    }
+
+    .sidebar-section-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--muted2);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      list-style: none;
+    }
+
+    .nav-link-custom {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 2px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+      cursor: pointer;
+      position: relative;
+      border-left: 2px solid transparent;
+    }
+
+    .nav-link-custom:hover {
+      color: var(--text);
+      background: rgba(0,212,255,0.05);
+    }
+
+    .nav-link-custom.active {
+      color: var(--accent);
+      background: rgba(0,212,255,0.08);
+      border-left-color: var(--accent);
+    }
+
+    .nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent2);
+      color: #fff;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      padding: 1px 6px;
+      border-radius: 20px;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px;
+      border-top: 1px solid var(--border2);
+    }
+
+    .admin-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .admin-info p {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .admin-info span {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--green);
+      letter-spacing: 1px;
+    }
+
+    /* ═══════════════ MAIN CONTENT ═══════════════ */
+    .main {
+      margin-left: var(--sidebar-w);
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+    }
+
+    /* Top bar */
+    .topbar {
+      background: rgba(4,15,26,0.9);
+      border-bottom: 1px solid var(--border2);
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar-left h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 2px;
+    }
+
+    .topbar-left p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-top: 1px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--green);
+      letter-spacing: 2px;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .topbar-time {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* Content area */
+    .content {
+      padding: 24px 28px;
+    }
+
+    /* ═══════════════ STAT CARDS ═══════════════ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease both;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .stat-card.c1::before { background: linear-gradient(90deg, var(--accent), transparent); }
+    .stat-card.c2::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+    .stat-card.c3::before { background: linear-gradient(90deg, var(--green), transparent); }
+    .stat-card.c4::before { background: linear-gradient(90deg, var(--orange), transparent); }
+
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-card.c1 .stat-value { color: var(--accent); text-shadow: 0 0 20px rgba(0,212,255,0.4); }
+    .stat-card.c2 .stat-value { color: var(--accent2); text-shadow: 0 0 20px rgba(255,62,108,0.4); }
+    .stat-card.c3 .stat-value { color: var(--green); text-shadow: 0 0 20px rgba(0,255,136,0.4); }
+    .stat-card.c4 .stat-value { color: var(--orange); text-shadow: 0 0 20px rgba(255,159,67,0.4); }
+
+    .stat-change {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+    }
+
+    .stat-change.up   { color: var(--green); }
+    .stat-change.down { color: var(--accent2); }
+
+    .stat-icon {
+      position: absolute;
+      right: 16px; bottom: 14px;
+      font-size: 2rem;
+      opacity: 0.08;
+    }
+
+    /* ═══════════════ CHARTS ROW ═══════════════ */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease 0.25s both;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .panel-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    .panel-body { padding: 18px; }
+
+    /* ═══════════════ TABLE ═══════════════ */
+    .table-panel {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      margin-bottom: 22px;
+      animation: fadeInUp 0.5s ease 0.35s both;
+      overflow: hidden;
+    }
+
+    .table-responsive { overflow-x: auto; }
+
+    table.cyber-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .cyber-table thead tr {
+      background: rgba(0,212,255,0.04);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cyber-table th {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 12px 16px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .cyber-table tbody tr {
+      border-bottom: 1px solid var(--border2);
+      transition: background 0.2s;
+    }
+
+    .cyber-table tbody tr:hover {
+      background: rgba(0,212,255,0.03);
+    }
+
+    .cyber-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .cyber-table td {
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .cyber-table td.mono {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      border-radius: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge-open    { background: rgba(255,62,108,0.12); color: var(--accent2); border: 1px solid rgba(255,62,108,0.25); }
+    .badge-review  { background: rgba(255,159,67,0.12); color: var(--orange);  border: 1px solid rgba(255,159,67,0.25); }
+    .badge-closed  { background: rgba(0,255,136,0.1);   color: var(--green);   border: 1px solid rgba(0,255,136,0.2); }
+    .badge-phish   { background: rgba(255,62,108,0.12); color: var(--accent2); border: 1px solid rgba(255,62,108,0.25); }
+    .badge-safe    { background: rgba(0,255,136,0.1);   color: var(--green);   border: 1px solid rgba(0,255,136,0.2); }
+    .badge-suspect { background: rgba(255,159,67,0.12); color: var(--orange);  border: 1px solid rgba(255,159,67,0.25); }
+
+    .risk-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .risk-bar-bg {
+      width: 80px; height: 5px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .risk-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      margin-right: 4px;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0,212,255,0.06);
+    }
+
+    .action-btn.danger:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      background: rgba(255,62,108,0.06);
+    }
+
+    /* ═══════════════ BOTTOM ROW ═══════════════ */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Threat log */
+    .threat-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .threat-entry:last-child { border-bottom: none; }
+
+    .threat-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .t-high   { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+    .t-medium { background: var(--orange);  box-shadow: 0 0 6px var(--orange); }
+    .t-low    { background: var(--green);   box-shadow: 0 0 6px var(--green); }
+
+    .threat-url {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .threat-meta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 3px;
+      letter-spacing: 1px;
+    }
+
+    /* Top reported */
+    .reported-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border2);
+    }
+    .reported-item:last-child { border-bottom: none; }
+
+    .report-rank {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      color: var(--muted2);
+      width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .report-url {
+      flex: 1;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .report-count {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem;
+      color: var(--accent2);
+      flex-shrink: 0;
+    }
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 8px 14px 8px 38px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text);
+      position: relative;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-wrap::before {
+      content: '🔍';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      z-index: 1;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--glow);
+    }
+
+    .filter-btn {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      padding: 8px 14px;
+      border-radius: 2px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0,212,255,0.06);
+    }
+
+    /* Mini stat beside chart */
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .legend-dot-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .legend-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* Pagination */
+    .table-footer {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-info {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .page-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .page-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .page-btn:hover, .page-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Model card */
+    .model-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .model-metric {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .model-metric-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .model-metric-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .retrain-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      color: var(--accent);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.3s;
+    }
+
+    .retrain-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent);
+      transform: translateX(-101%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      z-index: 0;
+    }
+
+    .retrain-btn:hover { color: var(--bg); }
+    .retrain-btn:hover::before { transform: translateX(0); }
+    .retrain-btn span { position: relative; z-index: 1; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .charts-row { grid-template-columns: 1fr; }
+      .bottom-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { display: none; }
+      .content { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Section page switching */
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <svg class="logo-hex" viewBox="0 0 36 36" fill="none">
+      <polygon points="18,2 34,10 34,26 18,34 2,26 2,10" stroke="#00d4ff" stroke-width="1.2" fill="rgba(0,212,255,0.04)"/>
+      <circle cx="18" cy="18" r="6" fill="none" stroke="#00d4ff" stroke-width="1.2"/>
+      <circle cx="18" cy="18" r="2.5" fill="#00d4ff"/>
+      <line x1="18" y1="12" x2="18" y2="8" stroke="#ff3e6c" stroke-width="1.2"/>
+    </svg>
+    <div class="logo-text">
+      <h2>Phish<span>Forensix</span></h2>
+      <p>// ADMIN PANEL //</p>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Main</div>
+    <ul style="list-style:none;padding:0;">
+      <li class="nav-item">
+        <a class="nav-link-custom active" onclick="showSection('dashboard', this)">
+          <span class="nav-icon">⊞</span> Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link-custom" onclick="showSection('complaints', this)">
+          <span class="nav-icon">⚑</span> Complaints
+          <span class="nav-badge">12</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link-custom" onclick="showSection('threats', this)">
+          <span class="nav-icon">◈</span> Threat Logs
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link-custom" onclick="showSection('users', this)">
+          <span class="nav-icon">◉</span> Users
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <ul style="list-style:none;padding:0;">
+      <li class="nav-item">
+        <a class="nav-link-custom" onclick="showSection('model', this)">
+          <span class="nav-icon">⬡</span> ML Model
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link-custom" onclick="showSection('settings', this)">
+          <span class="nav-icon">⚙</span> Settings
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="admin-profile">
+      <div class="avatar">AD</div>
+      <div class="admin-info">
+        <p>Admin Dharmi</p>
+        <span>● ONLINE</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>COMMAND CENTER</h1>
+      <p>PHISHFORENSIX :: THREAT INTELLIGENCE PLATFORM</p>
+    </div>
+    <div class="topbar-right">
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        LIVE MONITORING
+      </div>
+      <div class="topbar-time" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════ DASHBOARD SECTION ══════ -->
+    <div class="page-section active" id="section-dashboard">
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card c1">
+          <div class="stat-label">URLs Scanned</div>
+          <div class="stat-value" id="cnt-scanned">0</div>
+          <div class="stat-change up">▲ 14.2% this week</div>
+          <div class="stat-icon">🔗</div>
+        </div>
+        <div class="stat-card c2">
+          <div class="stat-label">Threats Detected</div>
+          <div class="stat-value" id="cnt-threats">0</div>
+          <div class="stat-change down">▲ 8.6% this week</div>
+          <div class="stat-icon">⚠</div>
+        </div>
+        <div class="stat-card c3">
+          <div class="stat-label">Complaints Filed</div>
+          <div class="stat-value" id="cnt-complaints">0</div>
+          <div class="stat-change up">▲ 5.1% this week</div>
+          <div class="stat-icon">📋</div>
+        </div>
+        <div class="stat-card c4">
+          <div class="stat-label">Cases Resolved</div>
+          <div class="stat-value" id="cnt-resolved">0</div>
+          <div class="stat-change up">▲ 21.3% this week</div>
+          <div class="stat-icon">✓</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Detection Activity</span>
+            <span class="panel-tag">LAST 7 DAYS</span>
+          </div>
+          <div class="panel-body">
+            <canvas id="activityChart" height="130"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Threat Breakdown</span>
+            <span class="panel-tag">ALL TIME</span>
+          </div>
+          <div class="panel-body">
+            <canvas id="donutChart" height="160"></canvas>
+            <div class="donut-legend">
+              <div class="legend-item">
+                <div class="legend-dot-label">
+                  <div class="legend-dot" style="background:var(--accent2)"></div>
+                  Phishing
+                </div>
+                <span class="legend-val" style="color:var(--accent2)">62%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-label">
+                  <div class="legend-dot" style="background:var(--orange)"></div>
+                  Suspicious
+                </div>
+                <span class="legend-val" style="color:var(--orange)">24%</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-label">
+                  <div class="legend-dot" style="background:var(--green)"></div>
+                  Safe
+                </div>
+                <span class="legend-val" style="color:var(--green)">14%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="bottom-row">
+        <!-- Threat Log -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Recent Threat Log</span>
+            <span class="panel-tag">LIVE</span>
+          </div>
+          <div class="panel-body" style="padding-top:6px;">
+            <div class="threat-entry">
+              <div class="threat-dot t-high"></div>
+              <div>
+                <div class="threat-url">secure-hdfc-verify.phish-login.com/auth</div>
+                <div class="threat-meta">HIGH RISK · UPI Scam · 2 min ago</div>
+              </div>
+            </div>
+            <div class="threat-entry">
+              <div class="threat-dot t-medium"></div>
+              <div>
+                <div class="threat-url">paytm-kyc-update.online/verify-now</div>
+                <div class="threat-meta">MEDIUM · KYC Fraud · 11 min ago</div>
+              </div>
+            </div>
+            <div class="threat-entry">
+              <div class="threat-dot t-high"></div>
+              <div>
+                <div class="threat-url">sbi-netbanking-login.in/secure/login</div>
+                <div class="threat-meta">HIGH RISK · Banking · 18 min ago</div>
+              </div>
+            </div>
+            <div class="threat-entry">
+              <div class="threat-dot t-low"></div>
+              <div>
+                <div class="threat-url">amazon-offer-india.store/deals</div>
+                <div class="threat-meta">LOW · E-commerce · 34 min ago</div>
+              </div>
+            </div>
+            <div class="threat-entry">
+              <div class="threat-dot t-high"></div>
+              <div>
+                <div class="threat-url">irctc-refund-claim.xyz/process</div>
+                <div class="threat-meta">HIGH RISK · Govt Impersonation · 47 min ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Reported + ML Model -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Top Reported URLs</span>
+              <span class="panel-tag">THIS MONTH</span>
+            </div>
+            <div class="panel-body" style="padding-top:6px;">
+              <div class="reported-item">
+                <span class="report-rank">#1</span>
+                <span class="report-url">fake-upi-reward.in/claim</span>
+                <span class="report-count">47×</span>
+              </div>
+              <div class="reported-item">
+                <span class="report-rank">#2</span>
+                <span class="report-url">aadhaar-link-now.xyz</span>
+                <span class="report-count">31×</span>
+              </div>
+              <div class="reported-item">
+                <span class="report-rank">#3</span>
+                <span class="report-url">pm-kisan-apply.net/form</span>
+                <span class="report-count">28×</span>
+              </div>
+              <div class="reported-item">
+                <span class="report-rank">#4</span>
+                <span class="report-url">sbi-account-blocked.top</span>
+                <span class="report-count">22×</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">ML Model Status</span>
+              <span class="panel-tag" style="color:var(--green);border-color:rgba(0,255,136,0.3)">ACTIVE</span>
+            </div>
+            <div class="panel-body">
+              <div class="model-stats">
+                <div class="model-metric">
+                  <div class="model-metric-val">97.4%</div>
+                  <div class="model-metric-label">Accuracy</div>
+                </div>
+                <div class="model-metric">
+                  <div class="model-metric-val">97.1%</div>
+                  <div class="model-metric-label">Recall</div>
+                </div>
+                <div class="model-metric">
+                  <div class="model-metric-val" style="color:var(--green)">v2.3</div>
+                  <div class="model-metric-label">Version</div>
+                </div>
+                <div class="model-metric">
+                  <div class="model-metric-val" style="color:var(--orange)">50K</div>
+                  <div class="model-metric-label">Trained On</div>
+                </div>
+              </div>
+              <button class="retrain-btn"><span>⟳ RETRAIN MODEL</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ COMPLAINTS SECTION ══════ -->
+    <div class="page-section" id="section-complaints">
+      <div class="table-panel">
+        <div class="panel-header">
+          <span class="panel-title">All Complaints</span>
+          <span class="panel-tag">TOTAL: 128</span>
+        </div>
+        <div style="padding:14px 18px;">
+          <div class="search-bar">
+            <div class="search-wrap">
+              <input class="search-input" type="text" placeholder="Search by ID, URL, user..." oninput="filterTable(this.value)"/>
+            </div>
+            <button class="filter-btn active" onclick="filterStatus('all',this)">All</button>
+            <button class="filter-btn" onclick="filterStatus('open',this)">Open</button>
+            <button class="filter-btn" onclick="filterStatus('review',this)">Review</button>
+            <button class="filter-btn" onclick="filterStatus('closed',this)">Closed</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="cyber-table" id="complaintsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Website URL</th>
+                <th>Fraud Type</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Risk</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="complaintsBody">
+              <!-- filled by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span class="table-info">SHOWING 1–10 OF 128 ENTRIES</span>
+          <div class="page-btns">
+            <button class="page-btn">‹ PREV</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">NEXT ›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ THREATS SECTION ══════ -->
+    <div class="page-section" id="section-threats">
+      <div class="table-panel">
+        <div class="panel-header">
+          <span class="panel-title">URL Detection Logs</span>
+          <span class="panel-tag">REAL-TIME</span>
+        </div>
+        <div class="table-responsive">
+          <table class="cyber-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>URL Scanned</th>
+                <th>Result</th>
+                <th>Risk Score</th>
+                <th>User</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">001</td>
+                <td class="mono">secure-hdfc-verify.phish-login.com</td>
+                <td><span class="status-badge badge-phish">● PHISHING</span></td>
+                <td>
+                  <div class="risk-bar-wrap">
+                    <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:94%;background:var(--accent2)"></div></div>
+                    <span class="mono">94%</span>
+                  </div>
+                </td>
+                <td>user_2841</td>
+                <td class="mono">2026-02-19 14:32</td>
+              </tr>
+              <tr>
+                <td class="mono">002</td>
+                <td class="mono">paytm-kyc-update.online</td>
+                <td><span class="status-badge badge-suspect">● SUSPECT</span></td>
+                <td>
+                  <div class="risk-bar-wrap">
+                    <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:67%;background:var(--orange)"></div></div>
+                    <span class="mono">67%</span>
+                  </div>
+                </td>
+                <td>user_1193</td>
+                <td class="mono">2026-02-19 14:21</td>
+              </tr>
+              <tr>
+                <td class="mono">003</td>
+                <td class="mono">google.com</td>
+                <td><span class="status-badge badge-safe">● SAFE</span></td>
+                <td>
+                  <div class="risk-bar-wrap">
+                    <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:2%;background:var(--green)"></div></div>
+                    <span class="mono">2%</span>
+                  </div>
+                </td>
+                <td>user_3342</td>
+                <td class="mono">2026-02-19 14:18</td>
+              </tr>
+              <tr>
+                <td class="mono">004</td>
+                <td class="mono">irctc-refund-claim.xyz/process</td>
+                <td><span class="status-badge badge-phish">● PHISHING</span></td>
+                <td>
+                  <div class="risk-bar-wrap">
+                    <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:89%;background:var(--accent2)"></div></div>
+                    <span class="mono">89%</span>
+                  </div>
+                </td>
+                <td>user_0091</td>
+                <td class="mono">2026-02-19 13:55</td>
+              </tr>
+              <tr>
+                <td class="mono">005</td>
+                <td class="mono">amazon-offer-india.store</td>
+                <td><span class="status-badge badge-suspect">● SUSPECT</span></td>
+                <td>
+                  <div class="risk-bar-wrap">
+                    <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:51%;background:var(--orange)"></div></div>
+                    <span class="mono">51%</span>
+                  </div>
+                </td>
+                <td>user_7712</td>
+                <td class="mono">2026-02-19 13:44</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ USERS SECTION ══════ -->
+    <div class="page-section" id="section-users">
+      <div class="table-panel">
+        <div class="panel-header">
+          <span class="panel-title">Registered Users</span>
+          <span class="panel-tag">TOTAL: 342</span>
+        </div>
+        <div class="table-responsive">
+          <table class="cyber-table">
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Scans</th>
+                <th>Complaints</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">USR-001</td>
+                <td>Dhruv Sharma</td>
+                <td class="mono">dhruv@gmail.com</td>
+                <td class="mono">2026-01-10</td>
+                <td>24</td>
+                <td>3</td>
+                <td><span class="status-badge badge-safe">● ACTIVE</span></td>
+                <td><button class="action-btn danger">BAN</button></td>
+              </tr>
+              <tr>
+                <td class="mono">USR-002</td>
+                <td>Priya Patel</td>
+                <td class="mono">priya.p@yahoo.in</td>
+                <td class="mono">2026-01-22</td>
+                <td>11</td>
+                <td>1</td>
+                <td><span class="status-badge badge-safe">● ACTIVE</span></td>
+                <td><button class="action-btn danger">BAN</button></td>
+              </tr>
+              <tr>
+                <td class="mono">USR-003</td>
+                <td>Ravi Kumar</td>
+                <td class="mono">ravi.k@hotmail.com</td>
+                <td class="mono">2026-02-01</td>
+                <td>7</td>
+                <td>5</td>
+                <td><span class="status-badge badge-review">● FLAGGED</span></td>
+                <td><button class="action-btn">REVIEW</button></td>
+              </tr>
+              <tr>
+                <td class="mono">USR-004</td>
+                <td>Anita Singh</td>
+                <td class="mono">anita.s@gmail.com</td>
+                <td class="mono">2026-02-14</td>
+                <td>2</td>
+                <td>0</td>
+                <td><span class="status-badge badge-safe">● ACTIVE</span></td>
+                <td><button class="action-btn danger">BAN</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ MODEL SECTION ══════ -->
+    <div class="page-section" id="section-model">
+      <div class="charts-row" style="grid-template-columns:1fr 1fr;">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Model Performance</span>
+            <span class="panel-tag">RANDOM FOREST</span>
+          </div>
+          <div class="panel-body">
+            <canvas id="modelChart" height="200"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Model Config</span>
+            <span class="panel-tag">v2.3</span>
+          </div>
+          <div class="panel-body">
+            <div class="model-stats" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+              <div class="model-metric"><div class="model-metric-val">97.4%</div><div class="model-metric-label">Accuracy</div></div>
+              <div class="model-metric"><div class="model-metric-val">97.1%</div><div class="model-metric-label">Recall</div></div>
+              <div class="model-metric"><div class="model-metric-val">96.8%</div><div class="model-metric-label">Precision</div></div>
+              <div class="model-metric"><div class="model-metric-val">97.0%</div><div class="model-metric-label">F1 Score</div></div>
+            </div>
+            <div style="margin-top:16px;">
+              <div class="stat-label" style="margin-bottom:10px;">Top Features (Importance)</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px;">
+                    <span>SSL Certificate Age</span><span style="color:var(--accent)">0.18</span>
+                  </div>
+                  <div class="risk-bar-bg" style="width:100%;height:6px;"><div class="risk-bar-fill" style="width:88%;background:var(--accent)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px;">
+                    <span>URL Length</span><span style="color:var(--accent)">0.14</span>
+                  </div>
+                  <div class="risk-bar-bg" style="width:100%;height:6px;"><div class="risk-bar-fill" style="width:70%;background:var(--accent)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px;">
+                    <span>Special Characters</span><span style="color:var(--accent)">0.11</span>
+                  </div>
+                  <div class="risk-bar-bg" style="width:100%;height:6px;"><div class="risk-bar-fill" style="width:55%;background:var(--accent)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px;">
+                    <span>Subdomain Count</span><span style="color:var(--accent)">0.09</span>
+                  </div>
+                  <div class="risk-bar-bg" style="width:100%;height:6px;"><div class="risk-bar-fill" style="width:45%;background:var(--accent)"></div></div>
+                </div>
+              </div>
+            </div>
+            <button class="retrain-btn" style="margin-top:18px;"><span>⟳ RETRAIN MODEL NOW</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ SETTINGS SECTION ══════ -->
+    <div class="page-section" id="section-settings">
+      <div class="panel" style="max-width:600px;">
+        <div class="panel-header">
+          <span class="panel-title">System Settings</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;flex-direction:column;gap:18px;">
+            <div>
+              <label class="stat-label" style="margin-bottom:8px;display:block;">Detection Threshold (%)</label>
+              <input type="range" min="50" max="99" value="75" style="width:100%;accent-color:var(--accent);" oninput="document.getElementById('thresh-val').textContent=this.value+'%'"/>
+              <span id="thresh-val" style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:var(--accent);letter-spacing:1px;">75%</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:rgba(0,0,0,0.2);border:1px solid var(--border2);border-radius:2px;">
+              <div>
+                <div style="font-weight:600;font-size:0.95rem;">Auto-Block Reported URLs</div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:1px;margin-top:3px;">Block URLs reported 5+ times automatically</div>
+              </div>
+              <div class="form-check form-switch" style="padding-left:2.5rem;">
+                <input class="form-check-input" type="checkbox" checked style="cursor:pointer;width:40px;height:20px;"/>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:rgba(0,0,0,0.2);border:1px solid var(--border2);border-radius:2px;">
+              <div>
+                <div style="font-weight:600;font-size:0.95rem;">Email Notifications</div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:1px;margin-top:3px;">Send alert on high-risk detections</div>
+              </div>
+              <div class="form-check form-switch" style="padding-left:2.5rem;">
+                <input class="form-check-input" type="checkbox" checked style="cursor:pointer;width:40px;height:20px;"/>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:rgba(0,0,0,0.2);border:1px solid var(--border2);border-radius:2px;">
+              <div>
+                <div style="font-weight:600;font-size:0.95rem;">1930 Helpline Integration</div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:1px;margin-top:3px;">Auto-forward critical cases to I4C</div>
+              </div>
+              <div class="form-check form-switch" style="padding-left:2.5rem;">
+                <input class="form-check-input" type="checkbox" style="cursor:pointer;width:40px;height:20px;"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+  /* ── Clock ── */
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('en-IN', { hour12: false });
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  /* ── Counter Animation ── */
+  function animateCount(id, target, duration=1500) {
+    const el = document.getElementById(id);
+    let start = 0;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) { el.textContent = target.toLocaleString(); clearInterval(timer); }
+      else el.textContent = Math.floor(start).toLocaleString();
+    }, 16);
+  }
+
+  window.addEventListener('load', () => {
+    animateCount('cnt-scanned',    4821);
+    animateCount('cnt-threats',    1247);
+    animateCount('cnt-complaints',  128);
+    animateCount('cnt-resolved',    89);
+  });
+
+  /* ── Section switcher ── */
+  function showSection(id, btn) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-link-custom').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    btn.classList.add('active');
+
+    // lazy init charts
+    if (id === 'model' && !modelChartInit) initModelChart();
+  }
+
+  /* ── Activity Chart ── */
+  const actCtx = document.getElementById('activityChart').getContext('2d');
+  new Chart(actCtx, {
+    type: 'line',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [
+        {
+          label: 'URLs Scanned',
+          data: [320, 410, 380, 520, 490, 310, 600],
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0,212,255,0.08)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#00d4ff',
+          pointRadius: 3,
+        },
+        {
+          label: 'Threats',
+          data: [80, 130, 95, 170, 140, 90, 200],
+          borderColor: '#ff3e6c',
+          backgroundColor: 'rgba(255,62,108,0.06)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#ff3e6c',
+          pointRadius: 3,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#4a7a99', font: { family: 'Share Tech Mono', size: 10 }, boxWidth: 12 } }
+      },
+      scales: {
+        x: { ticks: { color: '#4a7a99', font: { family: 'Share Tech Mono', size: 9 } }, grid: { color: 'rgba(13,48,80,0.5)' } },
+        y: { ticks: { color: '#4a7a99', font: { family: 'Share Tech Mono', size: 9 } }, grid: { color: 'rgba(13,48,80,0.5)' } }
+      }
+    }
+  });
+
+  /* ── Donut Chart ── */
+  const donutCtx = document.getElementById('donutChart').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Phishing', 'Suspicious', 'Safe'],
+      datasets: [{
+        data: [62, 24, 14],
+        backgroundColor: ['rgba(255,62,108,0.8)', 'rgba(255,159,67,0.8)', 'rgba(0,255,136,0.6)'],
+        borderColor: ['#ff3e6c', '#ff9f43', '#00ff88'],
+        borderWidth: 1,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '70%',
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+
+  /* ── Model Chart ── */
+  let modelChartInit = false;
+  function initModelChart() {
+    modelChartInit = true;
+    const ctx = document.getElementById('modelChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+        datasets: [{
+          label: 'Random Forest',
+          data: [97.4, 96.8, 97.1, 97.0],
+          backgroundColor: ['rgba(0,212,255,0.7)', 'rgba(0,212,255,0.5)', 'rgba(0,212,255,0.6)', 'rgba(0,212,255,0.55)'],
+          borderColor: '#00d4ff',
+          borderWidth: 1,
+          borderRadius: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { ticks: { color: '#4a7a99', font: { family: 'Share Tech Mono', size: 9 } }, grid: { color: 'rgba(13,48,80,0.5)' } },
+          y: { min: 90, max: 100, ticks: { color: '#4a7a99', font: { family: 'Share Tech Mono', size: 9 } }, grid: { color: 'rgba(13,48,80,0.5)' } }
+        }
+      }
+    });
+  }
+
+  /* ── Complaints Table Data ── */
+  const complaintsData = [
+    { id:'CMP-001', user:'Dhruv Sharma', url:'secure-hdfc.phish-login.com', type:'UPI Scam',        date:'2026-02-19', status:'open',   risk:94 },
+    { id:'CMP-002', user:'Priya Patel',  url:'paytm-kyc-update.online',      type:'KYC Fraud',       date:'2026-02-18', status:'review', risk:67 },
+    { id:'CMP-003', user:'Ravi Kumar',   url:'irctc-refund.xyz',              type:'Govt Impersonation', date:'2026-02-18', status:'open',   risk:89 },
+    { id:'CMP-004', user:'Anita Singh',  url:'amazon-offer-india.store',      type:'E-Commerce',     date:'2026-02-17', status:'review', risk:51 },
+    { id:'CMP-005', user:'Suresh Nair',  url:'sbi-blocked-account.top',       type:'Banking',        date:'2026-02-17', status:'closed', risk:92 },
+    { id:'CMP-006', user:'Meena Joshi',  url:'aadhaar-link-now.xyz',          type:'Identity Theft', date:'2026-02-16', status:'closed', risk:78 },
+    { id:'CMP-007', user:'Arjun Mehta',  url:'pm-kisan-apply.net',            type:'Govt Scheme',    date:'2026-02-15', status:'open',   risk:85 },
+    { id:'CMP-008', user:'Pooja Reddy',  url:'hdfc-loan-offer.in',            type:'Loan Scam',      date:'2026-02-14', status:'review', risk:63 },
+  ];
+
+  function renderComplaints(data) {
+    const tbody = document.getElementById('complaintsBody');
+    tbody.innerHTML = data.map(c => {
+      const badge = c.status === 'open'   ? 'badge-open'
+                  : c.status === 'review' ? 'badge-review'
+                  : 'badge-closed';
+      const label = c.status.toUpperCase();
+      const barColor = c.risk > 80 ? 'var(--accent2)' : c.risk > 50 ? 'var(--orange)' : 'var(--green)';
+      return `<tr>
+        <td class="mono">${c.id}</td>
+        <td>${c.user}</td>
+        <td class="mono">${c.url}</td>
+        <td>${c.type}</td>
+        <td class="mono">${c.date}</td>
+        <td><span class="status-badge ${badge}">● ${label}</span></td>
+        <td>
+          <div class="risk-bar-wrap">
+            <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:${c.risk}%;background:${barColor}"></div></div>
+            <span class="mono">${c.risk}%</span>
+          </div>
+        </td>
+        <td>
+          <button class="action-btn">VIEW</button>
+          <button class="action-btn">CLOSE</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  renderComplaints(complaintsData);
+
+  function filterTable(q) {
+    const filtered = complaintsData.filter(c =>
+      c.id.toLowerCase().includes(q.toLowerCase()) ||
+      c.user.toLowerCase().includes(q.toLowerCase()) ||
+      c.url.toLowerCase().includes(q.toLowerCase())
+    );
+    renderComplaints(filtered);
+  }
+
+  function filterStatus(status, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filtered = status === 'all' ? complaintsData : complaintsData.filter(c => c.status === status);
+    renderComplaints(filtered);
+  }
+
+</script>
+</body>
+</html>

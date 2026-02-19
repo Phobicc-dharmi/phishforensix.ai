@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PhishForensix — Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #030b14;
+      --panel: #071525;
+      --border: #0e3a5c;
+      --accent: #00d4ff;
+      --accent2: #ff3e6c;
+      --green: #00ff88;
+      --text: #c8e6f5;
+      --muted: #4a7a99;
+      --glow: 0 0 20px rgba(0,212,255,0.35);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridMove 20s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes gridMove {
+      from { background-position: 0 0; }
+      to   { background-position: 40px 40px; }
+    }
+
+    /* Glowing orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      z-index: 0;
+      animation: pulse 6s ease-in-out infinite;
+    }
+    .orb-1 { width: 400px; height: 400px; background: var(--accent); top: -100px; left: -100px; animation-delay: 0s; }
+    .orb-2 { width: 300px; height: 300px; background: var(--accent2); bottom: -80px; right: -80px; animation-delay: 3s; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.12; transform: scale(1); }
+      50%       { opacity: 0.22; transform: scale(1.08); }
+    }
+
+    /* Main wrapper */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      padding: 16px;
+    }
+
+    /* Logo / Brand */
+    .brand {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .brand-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 12px;
+      position: relative;
+    }
+
+    .brand-icon svg { width: 100%; height: 100%; }
+
+    .brand h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.7rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #fff;
+      text-shadow: 0 0 30px rgba(0,212,255,0.6);
+    }
+
+    .brand h1 span { color: var(--accent2); }
+
+    .brand p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Card */
+    .auth-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 36px 36px 28px;
+      position: relative;
+      box-shadow:
+        0 0 0 1px rgba(0,212,255,0.05),
+        0 20px 60px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(0,212,255,0.08);
+    }
+
+    /* Corner decorations */
+    .auth-card::before,
+    .auth-card::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-color: var(--accent);
+      border-style: solid;
+    }
+    .auth-card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .auth-card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    /* Tab switcher */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 10px 0;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.3s;
+      text-transform: uppercase;
+    }
+
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .tab-btn.active { color: var(--accent); }
+    .tab-btn.active::after { transform: scaleX(1); }
+
+    /* Forms */
+    .form-panel { display: none; animation: fadeUp 0.4s ease; }
+    .form-panel.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Status bar */
+    .status-bar {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* Form controls */
+    .field-group { margin-bottom: 18px; }
+
+    .field-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .field-wrap {
+      position: relative;
+    }
+
+    .field-wrap .field-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 1rem;
+      z-index: 1;
+    }
+
+    .form-control {
+      background: rgba(0,0,0,0.4) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 2px !important;
+      color: var(--text) !important;
+      font-family: 'Share Tech Mono', monospace !important;
+      font-size: 0.85rem !important;
+      padding: 11px 14px 11px 42px !important;
+      transition: border-color 0.3s, box-shadow 0.3s !important;
+    }
+
+    .form-control::placeholder { color: #2a4a5e !important; }
+
+    .form-control:focus {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 2px rgba(0,212,255,0.12), var(--glow) !important;
+      background: rgba(0,20,35,0.6) !important;
+      outline: none !important;
+    }
+
+    /* Submit button */
+    .btn-primary-custom {
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      color: var(--accent);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.3s, box-shadow 0.3s;
+      margin-top: 6px;
+    }
+
+    .btn-primary-custom::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent);
+      transform: translateX(-101%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      z-index: 0;
+    }
+
+    .btn-primary-custom:hover {
+      color: var(--bg);
+      box-shadow: var(--glow);
+    }
+
+    .btn-primary-custom:hover::before { transform: translateX(0); }
+
+    .btn-primary-custom span { position: relative; z-index: 1; }
+
+    /* Danger button for register */
+    .btn-danger-custom {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+    .btn-danger-custom::before { background: var(--accent2); }
+    .btn-danger-custom:hover { color: #fff; box-shadow: 0 0 20px rgba(255,62,108,0.4); }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Alert */
+    .alert-custom {
+      background: rgba(255,62,108,0.08);
+      border: 1px solid rgba(255,62,108,0.3);
+      border-radius: 2px;
+      padding: 10px 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--accent2);
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* Footer */
+    .card-footer-info {
+      text-align: center;
+      margin-top: 22px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .card-footer-info a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* Password strength */
+    .strength-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .strength-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 2px;
+      transition: width 0.3s, background 0.3s;
+    }
+
+    .strength-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* Scan line effect */
+    .auth-card .scanline {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.4;
+      animation: scan 3s linear infinite;
+    }
+
+    @keyframes scan {
+      0%   { top: 0; opacity: 0.4; }
+      90%  { opacity: 0.4; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Checkbox */
+    .form-check-input {
+      background-color: transparent !important;
+      border-color: var(--border) !important;
+      border-radius: 0 !important;
+    }
+    .form-check-input:checked {
+      background-color: var(--accent) !important;
+      border-color: var(--accent) !important;
+    }
+    .form-check-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* Success state */
+    .success-screen {
+      text-align: center;
+      display: none;
+      animation: fadeUp 0.5s ease;
+    }
+    .success-icon {
+      font-size: 3rem;
+      color: var(--green);
+      text-shadow: 0 0 20px var(--green);
+      margin-bottom: 16px;
+    }
+    .success-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      color: var(--green);
+    }
+    .success-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="wrapper">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="30,4 56,18 56,42 30,56 4,42 4,18" stroke="#00d4ff" stroke-width="1.5" fill="rgba(0,212,255,0.04)"/>
+          <polygon points="30,12 48,21 48,39 30,48 12,39 12,21" stroke="#00d4ff" stroke-width="0.8" fill="none" opacity="0.4"/>
+          <circle cx="30" cy="28" r="8" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+          <circle cx="30" cy="28" r="3" fill="#00d4ff"/>
+          <line x1="30" y1="20" x2="30" y2="14" stroke="#ff3e6c" stroke-width="1.5"/>
+          <line x1="36.9" y1="24" x2="41.5" y2="21.5" stroke="#ff3e6c" stroke-width="1" opacity="0.7"/>
+          <line x1="23.1" y1="24" x2="18.5" y2="21.5" stroke="#ff3e6c" stroke-width="1" opacity="0.7"/>
+        </svg>
+      </div>
+      <h1>Phish<span>Forensix</span></h1>
+      <p>// AI-Powered Cyber Threat Intelligence //</p>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card">
+      <div class="scanline"></div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('login', this)">Login</button>
+        <button class="tab-btn" onclick="switchTab('register', this)">Register</button>
+      </div>
+
+      <!-- Error Alert -->
+      <div class="alert-custom" id="alertBox">⚠ Invalid credentials. Access denied.</div>
+
+      <!-- LOGIN FORM -->
+      <div class="form-panel active" id="login-panel">
+
+        <div class="status-bar">
+          <div class="status-dot"></div>
+          <span>SECURE_CHANNEL :: TLS 1.3 :: ENCRYPTED</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Email Address</label>
+          <div class="field-wrap">
+            <span class="field-icon">📧</span>
+            <input type="email" class="form-control" id="loginEmail" placeholder="agent@phishforensix.in" autocomplete="off"/>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔑</span>
+            <input type="password" class="form-control" id="loginPass" placeholder="••••••••••••" autocomplete="off"/>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="rememberMe"/>
+            <label class="form-check-label" for="rememberMe">Remember session</label>
+          </div>
+          <a href="#" style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:1px;text-decoration:none;">Forgot key?</a>
+        </div>
+
+        <button class="btn-primary-custom" onclick="handleLogin()">
+          <span>⟩ Authenticate</span>
+        </button>
+
+        <div class="divider">OR</div>
+
+        <div class="card-footer-info">
+          No account? <a href="#" onclick="switchTab('register', document.querySelectorAll('.tab-btn')[1])">Register as new agent →</a>
+        </div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div class="form-panel" id="register-panel">
+
+        <div class="status-bar">
+          <div class="status-dot"></div>
+          <span>NEW_AGENT_REGISTRATION :: ENCRYPTED</span>
+        </div>
+
+        <div class="success-screen" id="successScreen">
+          <div class="success-icon">✓</div>
+          <div class="success-title">ACCESS GRANTED</div>
+          <div class="success-sub">// Account created. Redirecting to dashboard... //</div>
+        </div>
+
+        <div id="registerFormContent">
+          <div class="field-group">
+            <label class="field-label">Full Name</label>
+            <div class="field-wrap">
+              <span class="field-icon">👤</span>
+              <input type="text" class="form-control" id="regName" placeholder="Agent Name" autocomplete="off"/>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Email Address</label>
+            <div class="field-wrap">
+              <span class="field-icon">📧</span>
+              <input type="email" class="form-control" id="regEmail" placeholder="agent@domain.in" autocomplete="off"/>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Mobile Number</label>
+            <div class="field-wrap">
+              <span class="field-icon">📱</span>
+              <input type="tel" class="form-control" id="regPhone" placeholder="+91 XXXXX XXXXX" autocomplete="off"/>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Create Password</label>
+            <div class="field-wrap">
+              <span class="field-icon">🔒</span>
+              <input type="password" class="form-control" id="regPass" placeholder="Min. 8 characters" oninput="checkStrength(this.value)" autocomplete="off"/>
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <div class="strength-label" id="strengthLabel">STRENGTH: ---</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Confirm Password</label>
+            <div class="field-wrap">
+              <span class="field-icon">🔒</span>
+              <input type="password" class="form-control" id="regConfirm" placeholder="Repeat password" autocomplete="off"/>
+            </div>
+          </div>
+
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="agreeTerms"/>
+            <label class="form-check-label" for="agreeTerms">I agree to the <a href="#" style="color:var(--accent);text-decoration:none;">Terms & Privacy Policy</a></label>
+          </div>
+
+          <button class="btn-primary-custom btn-danger-custom" onclick="handleRegister()">
+            <span>⟩ Create Account</span>
+          </button>
+
+          <div class="card-footer-info mt-3">
+            Already registered? <a href="#" onclick="switchTab('login', document.querySelectorAll('.tab-btn')[0])">Login →</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom info -->
+    <div style="text-align:center;margin-top:16px;font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:#1e3a4a;letter-spacing:2px;">
+      PHISHFORENSIX v1.0 &nbsp;|&nbsp; SECURED BY AI &nbsp;|&nbsp; MHA / I4C COMPLIANT
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(tab + '-panel').classList.add('active');
+      document.getElementById('alertBox').style.display = 'none';
+    }
+
+    function showAlert(msg) {
+      const box = document.getElementById('alertBox');
+      box.textContent = '⚠ ' + msg;
+      box.style.display = 'block';
+      setTimeout(() => { box.style.display = 'none'; }, 4000);
+    }
+
+    function handleLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPass').value;
+      if (!email || !pass) { showAlert('All fields are required.'); return; }
+      if (!email.includes('@')) { showAlert('Invalid email format.'); return; }
+      // In real app: send POST to Flask /login
+      alert('✅ Login successful! (Connect to Flask backend)');
+    }
+
+    function checkStrength(val) {
+      const fill  = document.getElementById('strengthFill');
+      const label = document.getElementById('strengthLabel');
+      let score = 0;
+      if (val.length >= 8)  score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^a-zA-Z0-9]/.test(val)) score++;
+
+      const map = [
+        { w: '0%',   bg: 'transparent', t: 'STRENGTH: ---' },
+        { w: '25%',  bg: '#ff3e6c',     t: 'STRENGTH: WEAK' },
+        { w: '50%',  bg: '#ff9f43',     t: 'STRENGTH: FAIR' },
+        { w: '75%',  bg: '#00d4ff',     t: 'STRENGTH: GOOD' },
+        { w: '100%', bg: '#00ff88',     t: 'STRENGTH: STRONG' },
+      ];
+
+      fill.style.width      = map[score].w;
+      fill.style.background = map[score].bg;
+      label.textContent     = map[score].t;
+      label.style.color     = map[score].bg;
+    }
+
+    function handleRegister() {
+      const name    = document.getElementById('regName').value.trim();
+      const email   = document.getElementById('regEmail').value.trim();
+      const phone   = document.getElementById('regPhone').value.trim();
+      const pass    = document.getElementById('regPass').value;
+      const confirm = document.getElementById('regConfirm').value;
+      const terms   = document.getElementById('agreeTerms').checked;
+
+      if (!name || !email || !phone || !pass || !confirm) { showAlert('All fields are required.'); return; }
+      if (pass !== confirm)   { showAlert('Passwords do not match.'); return; }
+      if (pass.length < 8)    { showAlert('Password must be at least 8 characters.'); return; }
+      if (!terms)             { showAlert('You must agree to the Terms.'); return; }
+
+      // Show success
+      document.getElementById('registerFormContent').style.display = 'none';
+      document.getElementById('successScreen').style.display = 'block';
+
+      // In real app: POST to Flask /register
+      setTimeout(() => {
+        document.getElementById('registerFormContent').style.display = 'block';
+        document.getElementById('successScreen').style.display = 'none';
+        switchTab('login', document.querySelectorAll('.tab-btn')[0]);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

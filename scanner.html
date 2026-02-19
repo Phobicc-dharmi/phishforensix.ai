@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PhishForensix — URL Scanner</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:      #020c14;
+      --panel:   #061524;
+      --card:    #071b2e;
+      --border:  #0d3050;
+      --border2: #0a2540;
+      --accent:  #00d4ff;
+      --accent2: #ff3e6c;
+      --green:   #00ff88;
+      --orange:  #ff9f43;
+      --purple:  #a855f7;
+      --text:    #c8e6f5;
+      --muted:   #3a6a88;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+      background-size: 44px 44px;
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar-custom {
+      position: sticky; top: 0;
+      z-index: 100;
+      padding: 12px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(2,12,20,0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-brand svg { width: 28px; height: 28px; }
+    .nav-brand-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem; font-weight: 900;
+      color: #fff; letter-spacing: 1px;
+    }
+    .nav-brand-text span { color: var(--accent2); }
+
+    .nav-right {
+      display: flex; align-items: center; gap: 20px;
+    }
+
+    .nav-links {
+      display: flex; gap: 24px; list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; color: var(--muted);
+      text-decoration: none; letter-spacing: 2px;
+      text-transform: uppercase; transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+    .nav-user {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--muted); letter-spacing: 1px;
+    }
+    .nav-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace; font-size: 0.6rem;
+      font-weight: 700; color: var(--bg);
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .page-wrap {
+      position: relative; z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 36px;
+      animation: fadeInUp 0.5s ease both;
+    }
+
+    .page-eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--accent);
+      letter-spacing: 4px; text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .page-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.8rem; font-weight: 900;
+      color: #fff; letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .page-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── SCANNER INPUT CARD ── */
+    .scanner-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 28px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease 0.1s both;
+    }
+
+    .scanner-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+
+    .scanner-card::after {
+      content: '';
+      position: absolute; bottom: -1px; left: -1px;
+      width: 12px; height: 12px;
+      border-left: 2px solid var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .input-row {
+      display: flex; gap: 10px; align-items: stretch;
+    }
+
+    .url-input-wrap {
+      flex: 1; position: relative;
+    }
+
+    .url-prefix {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; color: var(--muted);
+      letter-spacing: 1px; z-index: 1;
+      pointer-events: none;
+    }
+
+    .url-input {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 14px 14px 14px 56px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.82rem; color: var(--text);
+      transition: border-color 0.3s, box-shadow 0.3s;
+      outline: none;
+    }
+
+    .url-input::placeholder { color: var(--muted); }
+
+    .url-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0,212,255,0.1), 0 0 20px rgba(0,212,255,0.15);
+    }
+
+    .scan-btn {
+      padding: 14px 28px;
+      background: var(--accent);
+      border: none; border-radius: 2px;
+      color: var(--bg);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s;
+      position: relative; overflow: hidden;
+    }
+
+    .scan-btn:hover {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 24px rgba(0,212,255,0.3);
+    }
+
+    .scan-btn:disabled {
+      opacity: 0.5; cursor: not-allowed;
+    }
+
+    .clear-btn {
+      padding: 14px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    .sample-urls {
+      margin-top: 14px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+
+    .sample-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    .sample-chip {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--accent);
+      background: rgba(0,212,255,0.06);
+      border: 1px solid rgba(0,212,255,0.15);
+      padding: 4px 10px; border-radius: 2px;
+      cursor: pointer; letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .sample-chip:hover {
+      background: rgba(0,212,255,0.12);
+      border-color: var(--accent);
+    }
+
+    .sample-chip.danger {
+      color: var(--accent2);
+      background: rgba(255,62,108,0.06);
+      border-color: rgba(255,62,108,0.15);
+    }
+
+    .sample-chip.danger:hover {
+      background: rgba(255,62,108,0.12);
+      border-color: var(--accent2);
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-section {
+      display: none;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.4s ease both;
+    }
+
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .progress-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      color: var(--accent); letter-spacing: 2px;
+    }
+
+    .progress-pct {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem; font-weight: 700;
+      color: var(--accent);
+    }
+
+    .progress-track {
+      height: 6px; background: var(--border);
+      border-radius: 2px; overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute; right: 0; top: -3px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .scan-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .scan-step {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 1px; padding: 8px 10px;
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    .scan-step.active {
+      color: var(--accent); border-color: rgba(0,212,255,0.3);
+      background: rgba(0,212,255,0.05);
+    }
+
+    .scan-step.done {
+      color: var(--green); border-color: rgba(0,255,136,0.2);
+      background: rgba(0,255,136,0.04);
+    }
+
+    .step-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border); flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .scan-step.active .step-dot {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: blink 0.8s ease-in-out infinite;
+    }
+
+    .scan-step.done .step-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+    /* ── RESULTS ── */
+    #resultsSection { display: none; animation: fadeInUp 0.5s ease both; }
+
+    /* Verdict banner */
+    .verdict-banner {
+      border-radius: 2px; padding: 28px 32px;
+      display: flex; align-items: center; gap: 28px;
+      margin-bottom: 20px;
+      position: relative; overflow: hidden;
+    }
+
+    .verdict-banner.phishing {
+      background: rgba(255,62,108,0.08);
+      border: 1px solid rgba(255,62,108,0.3);
+    }
+
+    .verdict-banner.suspicious {
+      background: rgba(255,159,67,0.08);
+      border: 1px solid rgba(255,159,67,0.3);
+    }
+
+    .verdict-banner.safe {
+      background: rgba(0,255,136,0.06);
+      border: 1px solid rgba(0,255,136,0.2);
+    }
+
+    .verdict-banner::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 4px;
+    }
+
+    .verdict-banner.phishing::before   { background: var(--accent2); }
+    .verdict-banner.suspicious::before { background: var(--orange); }
+    .verdict-banner.safe::before       { background: var(--green); }
+
+    .verdict-icon { font-size: 3rem; flex-shrink: 0; }
+
+    .verdict-info { flex: 1; }
+
+    .verdict-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.4rem; font-weight: 900;
+      letter-spacing: 3px; margin-bottom: 6px;
+    }
+
+    .verdict-banner.phishing   .verdict-label { color: var(--accent2); }
+    .verdict-banner.suspicious .verdict-label { color: var(--orange); }
+    .verdict-banner.safe       .verdict-label { color: var(--green); }
+
+    .verdict-url {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; color: var(--muted);
+      letter-spacing: 1px; word-break: break-all;
+    }
+
+    .verdict-msg {
+      font-size: 0.95rem; color: var(--text);
+      margin-top: 6px; line-height: 1.5;
+    }
+
+    /* Risk Meter */
+    .risk-meter-wrap {
+      flex-shrink: 0; text-align: center;
+    }
+
+    .risk-arc {
+      width: 120px; height: 70px;
+      position: relative; margin: 0 auto 6px;
+    }
+
+    .risk-arc svg { width: 100%; height: 100%; overflow: visible; }
+
+    .risk-score-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.6rem; font-weight: 900;
+    }
+
+    .verdict-banner.phishing   .risk-score-num { color: var(--accent2); }
+    .verdict-banner.suspicious .risk-score-num { color: var(--orange); }
+    .verdict-banner.safe       .risk-score-num { color: var(--green); }
+
+    .risk-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    /* ── RESULTS GRID ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .result-panel {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .rp-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border2);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .rp-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem; font-weight: 700;
+      color: var(--text); letter-spacing: 2px;
+    }
+
+    .rp-body { padding: 16px 18px; }
+
+    /* Feature breakdown */
+    .feature-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .feature-row:last-child { border-bottom: none; }
+
+    .feature-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; color: var(--muted);
+      letter-spacing: 1px; flex: 1;
+    }
+
+    .feature-val-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .feat-bar-bg {
+      width: 70px; height: 4px;
+      background: var(--border); border-radius: 2px; overflow: hidden;
+    }
+
+    .feat-bar-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .feat-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; width: 40px; text-align: right;
+    }
+
+    .feat-flag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem; padding: 2px 7px;
+      border-radius: 2px; letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .flag-danger { background: rgba(255,62,108,0.12); color: var(--accent2); border: 1px solid rgba(255,62,108,0.2); }
+    .flag-warn   { background: rgba(255,159,67,0.12); color: var(--orange);  border: 1px solid rgba(255,159,67,0.2); }
+    .flag-ok     { background: rgba(0,255,136,0.08);  color: var(--green);   border: 1px solid rgba(0,255,136,0.15); }
+
+    /* Domain info */
+    .domain-row {
+      display: flex; justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border2);
+    }
+    .domain-row:last-child { border-bottom: none; }
+    .domain-key {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--muted); letter-spacing: 1px;
+    }
+    .domain-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--text); text-align: right;
+    }
+
+    /* History list */
+    .history-item {
+      display: flex; align-items: center;
+      gap: 10px; padding: 8px 0;
+      border-bottom: 1px solid var(--border2);
+      cursor: pointer; transition: background 0.2s;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-item:hover { background: rgba(0,212,255,0.03); margin: 0 -18px; padding-left: 18px; padding-right: 18px; }
+    .h-url { flex:1; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .h-badge { font-family:'Share Tech Mono',monospace; font-size:0.55rem; padding:2px 7px; border-radius:2px; letter-spacing:1px; flex-shrink:0; }
+
+    /* ── COMPLAINT SECTION ── */
+    .complaint-trigger {
+      display: none;
+      background: rgba(255,62,108,0.06);
+      border: 1px solid rgba(255,62,108,0.25);
+      border-radius: 2px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.4s ease both;
+    }
+
+    .complaint-trigger-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+
+    .ct-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem; font-weight: 700;
+      color: var(--accent2); letter-spacing: 2px;
+    }
+
+    .ct-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; margin-top: 3px;
+    }
+
+    .complaint-form-wrap { display: none; }
+    .complaint-form-wrap.open { display: block; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-row.single { grid-template-columns: 1fr; }
+
+    .cf-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+      display: block; margin-bottom: 6px;
+    }
+
+    .cf-input, .cf-select, .cf-textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 10px 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem; color: var(--text);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .cf-input:focus, .cf-select:focus, .cf-textarea:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 2px rgba(255,62,108,0.1);
+    }
+
+    .cf-textarea { resize: vertical; min-height: 80px; }
+
+    .cf-select option { background: var(--card); }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 2px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent2);
+      background: rgba(255,62,108,0.04);
+    }
+
+    .upload-zone input[type=file] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+
+    .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+
+    .upload-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem; color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .upload-text span { color: var(--accent2); }
+
+    .upload-preview {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+    }
+
+    .upload-thumb {
+      background: rgba(255,62,108,0.1);
+      border: 1px solid rgba(255,62,108,0.2);
+      border-radius: 2px; padding: 6px 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--accent2);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .upload-thumb button {
+      background: none; border: none;
+      color: var(--accent2); cursor: pointer;
+      font-size: 0.8rem; padding: 0; line-height: 1;
+    }
+
+    /* Buttons */
+    .btn-complaint-toggle {
+      padding: 10px 24px;
+      background: transparent;
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 2px; border-radius: 2px;
+      cursor: pointer; transition: all 0.25s;
+      position: relative; overflow: hidden;
+    }
+
+    .btn-complaint-toggle::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--accent2);
+      transform: translateX(-101%);
+      transition: transform 0.3s ease; z-index: 0;
+    }
+
+    .btn-complaint-toggle:hover { color: #fff; }
+    .btn-complaint-toggle:hover::before { transform: translateX(0); }
+    .btn-complaint-toggle span { position: relative; z-index: 1; }
+
+    .btn-submit-complaint {
+      padding: 12px 28px;
+      background: var(--accent2);
+      border: none; border-radius: 2px;
+      color: #fff;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-submit-complaint:hover { opacity: 0.85; }
+
+    .btn-cancel {
+      padding: 12px 20px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem; cursor: pointer;
+      border-radius: 2px; transition: all 0.2s;
+    }
+    .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── SUCCESS TOAST ── */
+    .toast-wrap {
+      position: fixed; bottom: 30px; right: 30px;
+      z-index: 999; display: none;
+      animation: slideIn 0.4s ease both;
+    }
+
+    @keyframes slideIn {
+      from { opacity:0; transform:translateX(40px); }
+      to   { opacity:1; transform:translateX(0); }
+    }
+
+    .toast-card {
+      background: var(--card);
+      border: 1px solid rgba(0,255,136,0.3);
+      border-left: 3px solid var(--green);
+      border-radius: 2px; padding: 16px 20px;
+      min-width: 280px;
+    }
+
+    .toast-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem; font-weight: 700;
+      color: var(--green); letter-spacing: 1px;
+    }
+
+    .toast-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 1px; margin-top: 4px;
+    }
+
+    /* ── NEW SCAN btn ── */
+    .btn-new-scan {
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 2px; cursor: pointer;
+      border-radius: 2px; transition: all 0.25s;
+    }
+    .btn-new-scan:hover {
+      background: var(--accent); color: var(--bg);
+      box-shadow: 0 0 20px rgba(0,212,255,0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .results-grid { grid-template-columns: 1fr; }
+      .scan-steps   { grid-template-columns: 1fr 1fr; }
+      .form-row     { grid-template-columns: 1fr; }
+      .verdict-banner { flex-direction: column; gap: 16px; }
+      .risk-meter-wrap { order: -1; }
+      .input-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar-custom">
+  <a class="nav-brand" href="index.html">
+    <svg viewBox="0 0 32 32" fill="none">
+      <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#00d4ff" stroke-width="1.2" fill="rgba(0,212,255,0.05)"/>
+      <circle cx="16" cy="16" r="5" fill="none" stroke="#00d4ff" stroke-width="1.2"/>
+      <circle cx="16" cy="16" r="2" fill="#00d4ff"/>
+      <line x1="16" y1="11" x2="16" y2="7" stroke="#ff3e6c" stroke-width="1.2"/>
+    </svg>
+    <span class="nav-brand-text">Phish<span>Forensix</span></span>
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="scanner.html" class="active">Scanner</a></li>
+    <li><a href="complaint.html">Complaint</a></li>
+    <li><a href="track.html">Track</a></li>
+  </ul>
+
+  <div class="nav-user">
+    <div class="nav-avatar">D</div>
+    <span>Dharmi</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-eyebrow"><div class="live-dot"></div> AI THREAT SCANNER · REAL TIME</div>
+    <h1 class="page-title">URL SCANNER</h1>
+    <p class="page-sub">// Paste any suspicious URL · ML model analyzes 30+ features in seconds //</p>
+  </div>
+
+  <!-- Scanner Input -->
+  <div class="scanner-card">
+    <div class="input-row">
+      <div class="url-input-wrap">
+        <span class="url-prefix">URL ›</span>
+        <input class="url-input" type="text" id="urlInput"
+          placeholder="https://suspicious-website.com/login"
+          autocomplete="off" autocorrect="off" spellcheck="false"/>
+      </div>
+      <button class="scan-btn" id="scanBtn" onclick="startScan()">
+        ⟩ SCAN
+      </button>
+      <button class="clear-btn" onclick="clearAll()" title="Clear">✕</button>
+    </div>
+
+    <!-- Sample URLs -->
+    <div class="sample-urls">
+      <span class="sample-label">Try:</span>
+      <span class="sample-chip ok" onclick="setSample('https://google.com')">google.com ✓</span>
+      <span class="sample-chip danger" onclick="setSample('http://secure-hdfc-verify.phish-login.com/auth')">HDFC Phish 🚨</span>
+      <span class="sample-chip danger" onclick="setSample('http://paytm-kyc-update.online/verify-now')">Paytm KYC 🚨</span>
+      <span class="sample-chip danger" onclick="setSample('http://irctc-refund-claim.xyz/process')">IRCTC Scam 🚨</span>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section" id="progressSection">
+    <div class="progress-header">
+      <span class="progress-title" id="progressTitle">INITIALIZING SCAN...</span>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="scan-steps">
+      <div class="scan-step" id="step1"><div class="step-dot"></div>URL PARSING</div>
+      <div class="scan-step" id="step2"><div class="step-dot"></div>FEATURE EXTRACT</div>
+      <div class="scan-step" id="step3"><div class="step-dot"></div>ML INFERENCE</div>
+      <div class="scan-step" id="step4"><div class="step-dot"></div>RISK SCORING</div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultsSection">
+
+    <!-- Verdict Banner -->
+    <div class="verdict-banner" id="verdictBanner">
+      <div class="verdict-icon" id="verdictIcon">🚨</div>
+      <div class="verdict-info">
+        <div class="verdict-label" id="verdictLabel">PHISHING DETECTED</div>
+        <div class="verdict-url" id="verdictUrl"></div>
+        <div class="verdict-msg" id="verdictMsg"></div>
+      </div>
+      <div class="risk-meter-wrap">
+        <div class="risk-arc">
+          <svg viewBox="0 0 120 70">
+            <!-- Track arc -->
+            <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="#0a2540" stroke-width="8" stroke-linecap="round"/>
+            <!-- Value arc -->
+            <path id="riskArcPath" d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="#ff3e6c" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="157" stroke-dashoffset="157"
+              style="transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)"/>
+          </svg>
+        </div>
+        <div class="risk-score-num" id="riskNum">0%</div>
+        <div class="risk-label">RISK SCORE</div>
+      </div>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="results-grid">
+
+      <!-- Feature Breakdown -->
+      <div class="result-panel">
+        <div class="rp-header">
+          <span style="font-size:0.9rem;">🔬</span>
+          <span class="rp-title">FEATURE ANALYSIS</span>
+        </div>
+        <div class="rp-body" id="featureBody">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Domain Info + History -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="result-panel">
+          <div class="rp-header">
+            <span style="font-size:0.9rem;">🌐</span>
+            <span class="rp-title">DOMAIN INTEL</span>
+          </div>
+          <div class="rp-body" id="domainBody">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <div class="result-panel">
+          <div class="rp-header">
+            <span style="font-size:0.9rem;">🕒</span>
+            <span class="rp-title">SCAN HISTORY</span>
+          </div>
+          <div class="rp-body" id="historyBody" style="padding-top:6px;">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action row -->
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="btn-new-scan" onclick="clearAll()">⟩ SCAN NEW URL</button>
+      <button class="btn-complaint-toggle" id="complaintToggleBtn" onclick="toggleComplaint()" style="display:none;">
+        <span>⚑ FILE COMPLAINT</span>
+      </button>
+    </div>
+
+    <!-- Complaint Section -->
+    <div class="complaint-trigger" id="complaintSection">
+      <div class="complaint-trigger-header">
+        <div>
+          <div class="ct-title">⚑ FILE CYBERCRIME COMPLAINT</div>
+          <div class="ct-sub">// Auto-filled from scan data · NCRP compliant · AES-256 encrypted //</div>
+        </div>
+      </div>
+
+      <div class="complaint-form-wrap open">
+        <div class="form-row">
+          <div>
+            <label class="cf-label">Your Name</label>
+            <input class="cf-input" type="text" placeholder="Full Name" id="cf_name"/>
+          </div>
+          <div>
+            <label class="cf-label">Mobile Number</label>
+            <input class="cf-input" type="tel" placeholder="+91 XXXXX XXXXX" id="cf_mobile"/>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label class="cf-label">Email Address</label>
+            <input class="cf-input" type="email" placeholder="your@email.com" id="cf_email"/>
+          </div>
+          <div>
+            <label class="cf-label">Fraud Type</label>
+            <select class="cf-select" id="cf_type">
+              <option value="">Select Fraud Type</option>
+              <option>UPI / Payment Fraud</option>
+              <option>Phishing / Fake Website</option>
+              <option>OTP Scam</option>
+              <option>KYC Update Fraud</option>
+              <option>Govt. Scheme Scam</option>
+              <option>Banking / Loan Fraud</option>
+              <option>Identity Theft</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row single">
+          <div>
+            <label class="cf-label">Reported URL (auto-filled)</label>
+            <input class="cf-input" type="text" id="cf_url" readonly style="opacity:0.7;cursor:default;color:var(--accent2);"/>
+          </div>
+        </div>
+
+        <div class="form-row single">
+          <div>
+            <label class="cf-label">Incident Description</label>
+            <textarea class="cf-textarea" id="cf_desc"
+              placeholder="Describe how you encountered this URL, what happened, any financial loss..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-row single" style="margin-bottom:18px;">
+          <div>
+            <label class="cf-label">Upload Evidence (screenshots, transaction proofs)</label>
+            <div class="upload-zone" id="uploadZone"
+              ondragover="event.preventDefault();this.classList.add('dragover')"
+              ondragleave="this.classList.remove('dragover')"
+              ondrop="handleDrop(event)">
+              <input type="file" id="fileInput" multiple accept="image/*,.pdf"
+                onchange="handleFiles(this.files)"/>
+              <div class="upload-icon">📎</div>
+              <div class="upload-text">
+                Drag & drop files or <span>click to browse</span><br/>
+                <span style="color:var(--muted);font-size:0.58rem;">Supports: PNG, JPG, PDF · Max 10MB each</span>
+              </div>
+              <div class="upload-preview" id="uploadPreview"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-submit-complaint" onclick="submitComplaint()">⚑ SUBMIT COMPLAINT</button>
+          <button class="btn-cancel" onclick="toggleComplaint()">CANCEL</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /resultsSection -->
+
+</div><!-- /page-wrap -->
+
+<!-- Toast -->
+<div class="toast-wrap" id="toast">
+  <div class="toast-card">
+    <div class="toast-title">✓ COMPLAINT FILED SUCCESSFULLY</div>
+    <div class="toast-sub" id="toastSub">Complaint ID: CMP-XXX · Tracking via dashboard</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  /* ─────────────────────────────────
+     SCAN DATA PROFILES
+  ───────────────────────────────── */
+  const profiles = {
+    phishing: {
+      verdict: 'phishing',
+      label:   'PHISHING DETECTED',
+      icon:    '🚨',
+      msg:     'This URL shows strong indicators of a phishing attack. Do NOT visit or enter any credentials.',
+      risk:    94,
+      features: [
+        { name: 'URL Length',          val: 54,  max: 80, flag: 'danger', flagTxt: 'ABNORMAL' },
+        { name: 'Special Characters',  val: 7,   max: 10, flag: 'danger', flagTxt: 'HIGH' },
+        { name: 'Sensitive Keywords',  val: 3,   max: 5,  flag: 'danger', flagTxt: 'FOUND' },
+        { name: 'SSL Cert Age (days)', val: 3,   max: 365,flag: 'danger', flagTxt: '3 DAYS' },
+        { name: 'Subdomain Count',     val: 3,   max: 5,  flag: 'danger', flagTxt: 'SUSPICIOUS' },
+        { name: 'Search Engine Index', val: 0,   max: 1,  flag: 'danger', flagTxt: 'NOT FOUND' },
+        { name: 'Hyphen Density',      val: 2,   max: 5,  flag: 'warn',   flagTxt: 'HIGH' },
+        { name: 'Redirect Count',      val: 3,   max: 5,  flag: 'warn',   flagTxt: 'MULTIPLE' },
+      ],
+      domain: {
+        'Registered': '3 days ago',
+        'Registrar':  'Unknown / Privacy',
+        'Country':    'Unknown',
+        'IP Address': '185.220.xxx.xxx',
+        'HTTPS':      'Yes (Fake)',
+        'Blacklisted':'Not yet (Zero-day)',
+      }
+    },
+    suspicious: {
+      verdict: 'suspicious',
+      label:   'SUSPICIOUS URL',
+      icon:    '⚠',
+      msg:     'This URL has several suspicious characteristics. Proceed with extreme caution.',
+      risk:    62,
+      features: [
+        { name: 'URL Length',          val: 38,  max: 80, flag: 'warn',   flagTxt: 'LONG' },
+        { name: 'Special Characters',  val: 3,   max: 10, flag: 'warn',   flagTxt: 'MODERATE' },
+        { name: 'Sensitive Keywords',  val: 1,   max: 5,  flag: 'warn',   flagTxt: 'FOUND' },
+        { name: 'SSL Cert Age (days)', val: 45,  max: 365,flag: 'warn',   flagTxt: '45 DAYS' },
+        { name: 'Subdomain Count',     val: 2,   max: 5,  flag: 'warn',   flagTxt: 'MODERATE' },
+        { name: 'Search Engine Index', val: 0,   max: 1,  flag: 'warn',   flagTxt: 'NOT FOUND' },
+        { name: 'Hyphen Density',      val: 1,   max: 5,  flag: 'ok',     flagTxt: 'NORMAL' },
+        { name: 'Redirect Count',      val: 1,   max: 5,  flag: 'ok',     flagTxt: 'LOW' },
+      ],
+      domain: {
+        'Registered': '45 days ago',
+        'Registrar':  'NameCheap Inc.',
+        'Country':    'US',
+        'IP Address': '104.21.xxx.xxx',
+        'HTTPS':      'Yes',
+        'Blacklisted':'No',
+      }
+    },
+    safe: {
+      verdict: 'safe',
+      label:   'URL IS SAFE',
+      icon:    '✅',
+      msg:     'No phishing indicators detected. This URL appears to be legitimate and safe to visit.',
+      risk:    4,
+      features: [
+        { name: 'URL Length',          val: 10,  max: 80, flag: 'ok', flagTxt: 'NORMAL' },
+        { name: 'Special Characters',  val: 0,   max: 10, flag: 'ok', flagTxt: 'NONE' },
+        { name: 'Sensitive Keywords',  val: 0,   max: 5,  flag: 'ok', flagTxt: 'NONE' },
+        { name: 'SSL Cert Age (days)', val: 3640,max: 365,flag: 'ok', flagTxt: '10 YRS' },
+        { name: 'Subdomain Count',     val: 0,   max: 5,  flag: 'ok', flagTxt: 'NORMAL' },
+        { name: 'Search Engine Index', val: 1,   max: 1,  flag: 'ok', flagTxt: 'INDEXED' },
+        { name: 'Hyphen Density',      val: 0,   max: 5,  flag: 'ok', flagTxt: 'NONE' },
+        { name: 'Redirect Count',      val: 0,   max: 5,  flag: 'ok', flagTxt: 'NONE' },
+      ],
+      domain: {
+        'Registered': '25+ years ago',
+        'Registrar':  'MarkMonitor Inc.',
+        'Country':    'US',
+        'IP Address': '142.250.xxx.xxx',
+        'HTTPS':      'Yes (Verified)',
+        'Blacklisted':'No',
+      }
+    }
+  };
+
+  const scanHistory = [
+    { url: 'secure-hdfc-verify.phish-login.com', type: 'phishing' },
+    { url: 'paytm-kyc-update.online',            type: 'phishing' },
+    { url: 'amazon.in',                           type: 'safe' },
+  ];
+
+  let currentResult = null;
+  let uploadedFiles = [];
+
+  /* ─────────────────────────────────
+     SCAN LOGIC
+  ───────────────────────────────── */
+  function setSample(url) {
+    document.getElementById('urlInput').value = url;
+    document.getElementById('urlInput').focus();
+  }
+
+  function detectProfile(url) {
+    const l = url.toLowerCase();
+    if (l.includes('google') || l.includes('amazon.in') || l === 'https://google.com') return 'safe';
+    if (l.includes('phish') || l.includes('verify') || l.includes('refund') ||
+        l.includes('kyc') || l.includes('xyz') || l.includes('irctc-') ||
+        l.includes('sbi-') || l.includes('hdfc') || l.includes('reward')) return 'phishing';
+    if (l.includes('.online') || l.includes('.store') || l.includes('.top')) return 'suspicious';
+    // random for demo
+    const r = Math.random();
+    return r < 0.5 ? 'phishing' : r < 0.75 ? 'suspicious' : 'safe';
+  }
+
+  function startScan() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) {
+      document.getElementById('urlInput').style.borderColor = 'var(--accent2)';
+      setTimeout(() => document.getElementById('urlInput').style.borderColor = '', 1200);
+      return;
+    }
+
+    // hide results, show progress
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('complaintSection').style.display = 'none';
+    const ps = document.getElementById('progressSection');
+    ps.style.display = 'block';
+    document.getElementById('scanBtn').disabled = true;
+
+    const steps = ['step1','step2','step3','step4'];
+    const titles = ['PARSING URL STRUCTURE...','EXTRACTING 30 FEATURES...','RUNNING ML INFERENCE...','COMPUTING RISK SCORE...'];
+    const pcts   = [20, 50, 80, 100];
+
+    let i = 0;
+
+    function runStep() {
+      if (i > 0) {
+        document.getElementById(steps[i-1]).classList.remove('active');
+        document.getElementById(steps[i-1]).classList.add('done');
+      }
+      if (i < steps.length) {
+        document.getElementById(steps[i]).classList.add('active');
+        document.getElementById('progressTitle').textContent = titles[i];
+        animatePct(pcts[i]);
+        i++;
+        setTimeout(runStep, 700);
+      } else {
+        // done
+        setTimeout(() => {
+          ps.style.display = 'none';
+          document.getElementById('scanBtn').disabled = false;
+          showResults(url);
+        }, 400);
+      }
+    }
+
+    // reset steps
+    steps.forEach(s => {
+      document.getElementById(s).classList.remove('active','done');
+    });
+    animatePct(0);
+    runStep();
+  }
+
+  function animatePct(target) {
+    const fill = document.getElementById('progressFill');
+    const pct  = document.getElementById('progressPct');
+    fill.style.width = target + '%';
+    pct.textContent  = target + '%';
+  }
+
+  function showResults(url) {
+    const profileKey = detectProfile(url);
+    const p = profiles[profileKey];
+    currentResult = { url, profileKey, p };
+
+    // Verdict
+    const banner = document.getElementById('verdictBanner');
+    banner.className = 'verdict-banner ' + profileKey;
+    document.getElementById('verdictIcon').textContent  = p.icon;
+    document.getElementById('verdictLabel').textContent = p.label;
+    document.getElementById('verdictUrl').textContent   = '› ' + url;
+    document.getElementById('verdictMsg').textContent   = p.msg;
+
+    // Risk arc
+    const riskColor = profileKey === 'phishing' ? '#ff3e6c' : profileKey === 'suspicious' ? '#ff9f43' : '#00ff88';
+    const arcPath = document.getElementById('riskArcPath');
+    arcPath.setAttribute('stroke', riskColor);
+    const circumference = 157;
+    const offset = circumference - (p.risk / 100) * circumference;
+    setTimeout(() => {
+      arcPath.style.strokeDashoffset = offset;
+      animateNum('riskNum', p.risk, '%');
+    }, 200);
+
+    // Features
+    const fb = document.getElementById('featureBody');
+    fb.innerHTML = p.features.map(f => {
+      const barW = Math.min(100, Math.round((f.val / (f.max || 1)) * 100));
+      const barColor = f.flag === 'danger' ? 'var(--accent2)' : f.flag === 'warn' ? 'var(--orange)' : 'var(--green)';
+      return `<div class="feature-row">
+        <span class="feature-name">${f.name}</span>
+        <div class="feature-val-wrap">
+          <div class="feat-bar-bg"><div class="feat-bar-fill" style="width:0%;background:${barColor}" data-w="${barW}"></div></div>
+          <span class="feat-flag flag-${f.flag}">${f.flagTxt}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    // animate feature bars
+    setTimeout(() => {
+      fb.querySelectorAll('.feat-bar-fill').forEach(b => {
+        b.style.transition = 'width 1s cubic-bezier(0.4,0,0.2,1)';
+        b.style.width = b.dataset.w + '%';
+      });
+    }, 100);
+
+    // Domain
+    const db = document.getElementById('domainBody');
+    db.innerHTML = Object.entries(p.domain).map(([k,v]) => `
+      <div class="domain-row">
+        <span class="domain-key">${k}</span>
+        <span class="domain-val">${v}</span>
+      </div>`).join('');
+
+    // History
+    scanHistory.unshift({ url: url.replace(/https?:\/\//,'').substring(0,40), type: profileKey });
+    if (scanHistory.length > 5) scanHistory.pop();
+    renderHistory();
+
+    // Show complaint toggle only for phishing/suspicious
+    const ctBtn = document.getElementById('complaintToggleBtn');
+    if (profileKey !== 'safe') {
+      ctBtn.style.display = 'inline-flex';
+      document.getElementById('cf_url').value = url;
+    } else {
+      ctBtn.style.display = 'none';
+    }
+
+    document.getElementById('complaintSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderHistory() {
+    const hb = document.getElementById('historyBody');
+    hb.innerHTML = scanHistory.map(h => {
+      const bClass = h.type === 'phishing' ? 'flag-danger' : h.type === 'suspicious' ? 'flag-warn' : 'flag-ok';
+      const bTxt   = h.type === 'phishing' ? '🚨 PHISH' : h.type === 'suspicious' ? '⚠ SUSPECT' : '✓ SAFE';
+      return `<div class="history-item" onclick="setSample('https://${h.url}')">
+        <span class="h-url">${h.url}</span>
+        <span class="h-badge ${bClass}">${bTxt}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function animateNum(id, target, suffix='') {
+    const el = document.getElementById(id);
+    let val = 0;
+    const step = target / 40;
+    const t = setInterval(() => {
+      val += step;
+      if (val >= target) { el.textContent = target + suffix; clearInterval(t); }
+      else el.textContent = Math.floor(val) + suffix;
+    }, 25);
+  }
+
+  /* ─────────────────────────────────
+     COMPLAINT
+  ───────────────────────────────── */
+  function toggleComplaint() {
+    const s = document.getElementById('complaintSection');
+    if (s.style.display === 'none' || s.style.display === '') {
+      s.style.display = 'block';
+      s.scrollIntoView({ behavior:'smooth', block:'start' });
+    } else {
+      s.style.display = 'none';
+    }
+  }
+
+  function submitComplaint() {
+    const name   = document.getElementById('cf_name').value.trim();
+    const mobile = document.getElementById('cf_mobile').value.trim();
+    const type   = document.getElementById('cf_type').value;
+
+    if (!name || !mobile || !type) {
+      alert('Please fill in Name, Mobile, and Fraud Type.');
+      return;
+    }
+
+    const id = 'CMP-' + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('complaintSection').style.display = 'none';
+
+    const toast = document.getElementById('toast');
+    document.getElementById('toastSub').textContent = `Complaint ID: ${id} · Track status in dashboard`;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 5000);
+  }
+
+  /* ─────────────────────────────────
+     FILE UPLOAD
+  ───────────────────────────────── */
+  function handleFiles(files) {
+    Array.from(files).forEach(f => {
+      if (!uploadedFiles.find(u => u.name === f.name)) {
+        uploadedFiles.push(f);
+      }
+    });
+    renderUploadPreview();
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  }
+
+  function renderUploadPreview() {
+    const p = document.getElementById('uploadPreview');
+    p.innerHTML = uploadedFiles.map((f,i) => `
+      <div class="upload-thumb">
+        📄 ${f.name.length > 20 ? f.name.substring(0,20)+'...' : f.name}
+        <button onclick="removeFile(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  function removeFile(i) {
+    uploadedFiles.splice(i,1);
+    renderUploadPreview();
+  }
+
+  /* ─────────────────────────────────
+     CLEAR
+  ───────────────────────────────── */
+  function clearAll() {
+    document.getElementById('urlInput').value = '';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('complaintSection').style.display = 'none';
+    currentResult = null;
+    uploadedFiles = [];
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* Enter key */
+  document.getElementById('urlInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') startScan();
+  });
+
+  /* Initial history render */
+  renderHistory();
+</script>
+</body>
+</html>
